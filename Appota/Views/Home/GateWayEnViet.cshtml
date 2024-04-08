@@ -210,6 +210,13 @@
             </div>
             <div class="col-4">
                 <div class="content-box p-4 bg-white">
+
+                    @if (!string.IsNullOrEmpty(ViewBag.VNDtoUSD))
+                    {
+                        <span style="font-size:14px;">Giá USD hôm nay:<span class="text-danger"> @ViewBag.VNDtoUSD </span> </span>
+                    }
+
+
                     <div class="row">
                         <div class="col-12">
                             <h5>Số tiền thanh toán</h5>

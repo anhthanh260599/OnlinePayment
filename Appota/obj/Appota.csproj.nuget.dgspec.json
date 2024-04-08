@@ -68,6 +68,10 @@
               "target": "Package",
               "version": "[13.0.3, )"
             },
+            "PayPal": {
+              "target": "Package",
+              "version": "[1.9.1, )"
+            },
             "System.IdentityModel.Tokens.Jwt": {
               "target": "Package",
               "version": "[7.5.0, )"
