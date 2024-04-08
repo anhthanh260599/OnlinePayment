@@ -1,0 +1,311 @@
+﻿@model List<Payment>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Reddit+Mono:wght@200..900&display=swap" rel="stylesheet">
+
+<style>
+    body {
+        background-color: #f4f6f8;
+    }
+
+    .content-box {
+        border-radius: 24px;
+    }
+
+    .total-price {
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .order__title {
+        font-family: "Reddit Mono", monospace;
+        font-size: 16px;
+    }
+
+    .radio-button {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        width: 100%;
+    }
+
+        .radio-button input[type="radio"] {
+            display: none; /* Giấu nút radio */
+        }
+
+        .radio-button label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 12px 5px;
+            border: 1px solid #dbdbdb; /* CSS mặc định */
+            transition: border-color 0.3s ease;
+            border-radius: 8px;
+        }
+
+            .radio-button label:hover {
+                border-color: #ccc; /* CSS khi hover */
+            }
+
+        .radio-button input[type="radio"]:checked + label {
+            background-color: #effaf4; /*CSS khi check vào nút*/
+            border: 1px solid #92deb4;
+        }
+
+        .radio-button img {
+            width: 40px; /* CSS hình của radio */
+            height: 40px;
+            margin-right: 10px;
+        }
+
+    .btn__xac-nhan {
+        background-color: #30bf71; /* CSS nút Submit*/
+        color: white;
+    }
+
+    .paymentType__header {
+        margin-left: 24px;
+        margin-top: 12px;
+        color: #30bf71;
+        font-size: 14px;
+    }
+
+    .list-payment-type {
+        /* margin-left: 18px; */
+        padding: 0 22px;
+    }
+</style>
+
+<hr />
+
+<h3>Thông tin thanh toán</h3>
+
+
+<form asp-action="SubmitThanhToan" method="post">
+    <div class="container">
+        <div class="row">
+            <div class="col-8">
+
+                <div class="content-box p-4 bg-white">
+
+                    <section>
+                        <div class="row">
+                            <div class="col-12">
+                                <h5 class="order__header">Thông tin đơn hàng</h5>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-7">
+                                <span class="text-primary">Tạm thời</span>
+                                <p class="order__title">Tên người dùng</p>
+                            </div>
+                            <div class="col-5">
+                                <input type="text" class="float-end form-control" placeholder="Nhập tên" name="userName" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-7">
+                                <p class="order__title">Mã sản phẩm</p>
+                            </div>
+                            <div class="col-5">
+                                <p class="float-end"><span>EV00001</span></p>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-7">
+                                <p class="order__title">Nhà cung cấp</p>
+                            </div>
+                            <div class="col-5">
+                                <p class="float-end"><span>Én Việt</span></p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-7">
+                                <p class="order__title">Tên sản phẩm</p>
+                            </div>
+                            <div class="col-5">
+                                <p class="float-end"><span>Yến Sào</span></p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <br />
+
+                    <section>
+                        <div class="row">
+                            <div class="col-12">
+                                <h5 class="order__header">Phương thức thanh toán</h5>
+                            </div>
+                        </div>
+                        <br />
+
+                        <div class="row g-1">
+
+                            @if (Model != null && Model.Any())
+                            {
+                                foreach (var item in Model)
+                                {
+                                    <div class="col-4">
+                                        <div class="radio-button">
+                                            <input type="radio" id="@item.Name" data-id="@item.Id" value="@item.Name" name="paymentType" />
+                                            <label style="width:100%" for="@item.Name">
+                                                <img src="@item.Image" alt="@item.Name" />
+                                                <span class="payment-name">Thanh toán qua @item.Name </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </section>
+
+                </div>
+
+                <div class="paymentType">
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="paymentType__header">Loại thanh toán</h5>
+                        </div>
+                    </div>
+
+                    <section class="list-payment-type">
+
+                        <div class="row g-1 list-payment-type-item">
+
+                            @if (Model != null && Model.Any())
+                            {
+                                foreach (var item in Model)
+                                {
+                                    if (item.PaymentFees.Count > 0)
+                                    {
+                                        var requestType = item.PaymentFees.Where(x => x.PaymentId == item.Id && x.IsActived).ToList();
+
+                                        foreach (var request in requestType)
+                                        {
+                                            <div class="col-4" data-id="@item.Id">
+                                                <div class="radio-button">
+                                                    <input type="radio" id="@request.RequestType" data-id="requestType" value="@request.RequestType" data-value="@request.Percent" name="requestType" />
+                                                    <label style="width:100%" for="@request.RequestType">
+                                                        <img src="@request.Image" alt="@request.RequestType" />
+                                                        <span class="payment-name">Thanh toán qua @request.Name</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                        }
+                                    }
+                                }
+                            }
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+            </div>
+            <div class="col-4">
+                <div class="content-box p-4 bg-white">
+                    <div class="row">
+                        <div class="col-12">
+                            <h5>Số tiền thanh toán</h5>
+                        </div>
+                    </div>
+
+
+
+                    <div class="row">
+                        <div class="col-7">
+                            <p class="order__title">Tạm tính</p>
+                        </div>
+                        <div class="col-5">
+                            <p class="float-end"><span class="SubTotal">100000</span> đ</p>
+                            <input type="text" name="Money" hidden value="100000" />
+                        </div>
+                    </div>
+
+
+                    <div class="row">
+                        <div class="col-7">
+                            <p data-id="requestType" class="order__title">Phí (0)</p>
+                        </div>
+                        <div class="col-5">
+                            <p class="float-end"><span class="FeeDependOnSth">0</span> đ</p>
+                        </div>
+                    </div>
+
+
+
+                    <hr />
+                    <div class="row">
+                        <div class="col-7">
+                            <p class="total-price">TỔNG PHÍ THANH TOÁN</p>
+                        </div>
+                        <div class="col-5">
+                            <p class="float-end"><span class="TotalPay">100000</span> đ</p>
+                            <input type="text" hidden class="TotalPayInput" name="TotalPay" value="100000" />
+
+                        </div>
+                    </div>
+                </div>
+
+
+                <button type="submit" class="btn btn__xac-nhan p-2 mt-4" style="width: 100%">Xác nhận</button>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+
+<script>
+
+    $(document).ready(function () {
+
+        $('div.list-payment-type-item > div').hide()
+        $('.paymentType__header').hide()
+
+        $('input[name="paymentType"]').on('click', function () {
+            var id = $(this).data('id');
+            $('.paymentType__header').show()
+            $('div.list-payment-type-item > div').hide(); // ẩn tất cả các phần tử
+            $('div.list-payment-type-item > div[data-id="' + id + '"]').show(); // hiển thị phần tử tương ứng
+        });
+
+
+        $('input[name="requestType"]').on('click', function () {
+
+            // Lấy giá trị %
+            var percent = $(this).data('value');
+            percent = percent * 100;
+            $('p[data-id="requestType"]').text('Phí (' + percent + ' %)');
+
+            // Tính tiền tạm tính
+            var subtotal = parseFloat($('.SubTotal').text());
+            var fee = subtotal * percent / 100;
+            $('.FeeDependOnSth').text(fee.toFixed(0));
+
+            //Tính tổng tiền
+            var totalPay = parseFloat($('.TotalPay').text());
+            totalPay = fee + subtotal;
+            $('.TotalPay').text(totalPay.toFixed(0));
+            $('.TotalPayInput').val(totalPay);
+        });
+
+    });
+
+    var paymentNames = document.getElementsByClassName("payment-name");
+    for (var i = 0; i < paymentNames.length; i++) {
+        var text = paymentNames[i].innerText;
+        if (text.length > 23) {
+            var newText = text.substring(0, 23) + "..."
+            paymentNames[i].innerText = newText
+        }
+    }
+
+
+</script>

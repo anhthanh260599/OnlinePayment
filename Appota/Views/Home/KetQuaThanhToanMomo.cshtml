@@ -1,0 +1,36 @@
+﻿@model UsersPay;
+
+<h2 class="text-primary text-center">Kết quả thanh toán</h2>
+
+<div class="container">
+    <div class="row">
+        <div class="col-12 text-center">
+            <img style="width: 20%" src="~/lib/Content/logo/payment-logo/momo-logo.png" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 text-center">
+            @if (Model != null)
+            {
+                if (Model.ResultCode == 0)
+                {
+                    <h4 class="text-success">Thanh toán thành công</h4>
+                    <span>Tên: <span class="fw-bold">@Model.Name</span></span> <br />
+                    <span>Mã đơn hàng: <span class="fw-bold">@Model.OrderId</span></span> <br />
+                    <span>Tổng tiền: <span class="fw-bold">@Model.Amount</span></span> <br />
+                }
+                else
+                {
+                    <h4 class="text-danger">Thanh toán thất bại</h4>
+                    <span class="text-danger">@Model.PaymentStatus</span>
+                }
+            }
+            else
+            {
+                <p>Không có dữ liệu</p>
+            }
+        </div>
+    </div>
+</div>
+
+

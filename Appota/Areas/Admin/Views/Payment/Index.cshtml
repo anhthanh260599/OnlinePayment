@@ -1,0 +1,375 @@
+﻿@model List<Appota.Models.Payment>
+@using Appota.Common
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<style>
+
+    .accordion-item .accordion-button {
+        border: 1px solid #dbdbdb;
+    }
+
+    /* CSS nút switch */
+
+    /* Switch container */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+
+        /* Hide default checkbox */
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    /* The slider (circle) */
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: .4s;
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+    input:checked + .slider {
+        background-color: #f5821f;
+    }
+
+    input:focus + .slider {
+        box-shadow: 0 0 1px #f5821f;
+    }
+
+    input:checked + .slider:before {
+        -webkit-transform: translateX(26px);
+        -ms-transform: translateX(26px);
+        transform: translateX(26px);
+    }
+
+    /* Rounded sliders */
+    .slider.round {
+        border-radius: 34px;
+    }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+</style>
+
+<div>
+    <a asp-area="Admin" asp-controller="Payment" asp-action="Add" class="btn btn-primary float-end">Thêm phương thức</a>
+</div>
+
+<br />
+
+<div id="accordion">
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var item in Model)
+        {
+            <br />
+
+
+
+            <label class="switch mb-2">
+                <input type="checkbox" data-id="@item.Id" class="btnActive" @(item.IsActived ? "checked" : "") />
+                <span class="slider round"></span>
+            </label>
+
+            <div class="accordion-item">
+
+                <h2 class="accordion-header" style="border-top: solid 1px #dbdbdb;" id="heading@(item.Id)">
+
+                    <div class="row">
+                        <div class="col-md-2 text-center">
+                            <img style="width:40%; margin: 8px;border-radius:8px; border:solid 1px #dbdbdb" src="@item.Image" />
+                        </div>
+                        <div class="col-md-8">
+                            @using (Html.BeginForm("ChangePaymentImage", "Payment", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                            {
+                                <div class="row">
+                                    <div class="col-8">
+                                        <input name="PaymentImage" style="margin: 4px 0;" type="file" class="form-control-file form-control" id="PaymentImage">
+                                        <input type="hidden" name="PaymentId" value="@item.Id" />
+                                    </div>
+
+                                    <div class="col-4">
+                                        <button type="submit" style="margin-left:-18px; margin-bottom: 2px;" class="btn btn-success">Lưu</button>
+                                    </div>
+                                </div>
+                            }
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse@(item.Id)" aria-expanded="false" aria-controls="collapse@(item.Id)">
+                                @item.Name
+                            </button>
+                        </div>
+                    </div>
+                </h2>
+
+                <div id="collapse@(item.Id)" class="accordion-collapse collapse" aria-labelledby="heading@(item.Id)" data-bs-parent="#accordion">
+                    <div class="accordion-body">
+
+                        @using (Html.BeginForm("Edit", "Payment", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                        {
+                            <table id="feeTable@(item.Id)" class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Trạng thái</th>
+                                        <th>Ảnh</th>
+                                        <th>Tên phí</th>
+                                        <th>Chi phí %</th>
+                                        <th>Giá trị cố định</th>
+                                        <th>RequestType/Bankcode</th>
+                                        <th>Thay đổi ảnh</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+
+
+                                <tbody>
+                                    @foreach (var fee in item.PaymentFees)
+                                    {
+                                        <tr class="feeRow">
+                                            <td class="text-center">
+                                                <label class="switch">
+                                                    <input type="checkbox" data-id="@fee.Id" class="btnFeeActive" @(fee.IsActived ? "checked" : "") />
+
+                                                    <span class="slider round"></span>
+                                                </label>
+                                            </td>
+                                            <td>
+                                                <img style="width:40px;height:40px;" src="@fee.Image" />
+                                            </td>
+                                            <td> <input name="FeeName[]" value="@fee.Name" type="text" class="form-control" placeholder="Nhập tên phí" />   </td>
+                                            <td> <input name="Percent[]" value="@fee.Percent" type="text" class="form-control" placeholder="Nhập tỷ lệ %" />  </td>
+                                            <td> <input name="FixedCosts[]" value="@fee.FixedCosts" type="text" class="form-control" placeholder="Nhập giá cố định" /></td>
+                                            <td> <input name="RequestType[]" value="@fee.RequestType" type="text" class="form-control" placeholder="Nhập RequestType/BankCode" /></td>
+                                            <td class="custom-file">
+                                                <input name="requestTypeImage" type="file" class="form-control-file form-control" id="requestTypeImage" value="@fee.Image">
+                                            </td>
+
+                                            <td>
+                                                <a href="#" class="btnDeleteFee btn btn-sm btn-danger" data-id="@fee.Id"><i class="fa-regular fa-trash-can"></i></a>
+                                                <input type="text" name="PaymentID" value="@fee.PaymentId" hidden />
+                                                <input type="text" name="PaymentFeeId" value="@fee.Id" hidden />
+                                            </td>
+                                        </tr>
+
+                                    }
+                                </tbody>
+                            </table>
+                            <input type="button" class="button-add-line btn btn-primary" value="Thêm phí" onclick="addField('feeTable@(item.Id)');" />
+                            <button type="submit" id="submitForm" class="btn btn-success">Lưu</button>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                    <span class="text-danger"> Chưa có dữ liệu </span>
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordion">
+                <div class="accordion-body">
+                    <span class="text-danger"> Chưa có dữ liệu </span>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('body').on('change', '.btnActive', function () {
+            var checkbox = $(this);
+            var id = checkbox.data('id');
+
+            $.ajax({
+                url: '/admin/Payment/IsActive',
+                type: 'POST',
+                data: { id: id },
+                success: function (result) {
+                    if (result.success) {
+                        checkbox.attr("checked", "checked");
+                    }
+                    else {
+                        checkbox.removeAttr('checked');
+                    }
+                }
+            })
+        })
+
+        $('body').on('change', '.btnFeeActive', function () {
+            var checkbox = $(this);
+            var id = checkbox.data('id');
+
+            $.ajax({
+                url: '/admin/Payment/FeeIsActive',
+                type: 'POST',
+                data: { id: id },
+                success: function (result) {
+                    if (result.success) {
+                        checkbox.attr("checked", "checked")
+                    }
+                    else {
+                        checkbox.removeAttr('checked')
+                    }
+                }
+            })
+        });
+
+        $('body').on('change', '.custom-file input[type="file"]', function () {
+            var fileInput = $(this);
+            var id = fileInput.closest('.feeRow').find('input[name="PaymentId"]').val();
+            var formData = new FormData();
+            formData.append('PaymentId', id);
+            formData.append('PaymentImage', fileInput.prop('files')[0]);
+
+            $.ajax({
+                url: '/admin/Payment/ChangePaymentImage',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (result) {
+                    if (success) {
+                        location.reload();
+                        alert("Đổi ảnh thành công");
+                    }
+                    else {
+                        alert("Đổi ảnh thất bại, có lỗi xảy ra");
+                    }
+                },
+                error: function (xhr, status, error) {
+                    alert("Đổi ảnh thất bại, có lỗi xảy ra");
+
+                }
+            });
+        });
+
+
+        $('body').on('click', '.btnDeleteFee', function () {
+            var id = $(this).data("id");
+            var confirmMessage = confirm("Bạn có thực sự muốn xoá?");
+            if (confirmMessage === true) {
+                $.ajax({
+                    url: '/admin/Payment/DeleteFee',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function (result) {
+                        if (result.success) {
+                            location.reload()
+                        }
+                    }
+                })
+            }
+        })
+    });
+
+
+    function addField(table) {
+
+        var tableRef = document.getElementById(table);
+        var newRow = tableRef.insertRow(-1);
+
+        var newCell = newRow.insertCell(0);
+        var newElem = document.createElement('label');
+        newElem.setAttribute("class", "switch");
+
+        newCell.appendChild(newElem);
+
+        newCell = newRow.insertCell(1);
+        newElem = document.createElement('img');
+        newElem.setAttribute("style", "width:40px;height:40px;");
+        newElem.setAttribute("src", "/lib/Content/logo/payment-logo/enviet-logo.png");
+
+        newCell.appendChild(newElem);
+
+        newCell = newRow.insertCell(2);
+        newElem = document.createElement('input');
+        newElem.setAttribute("class", "form-control");
+        newElem.setAttribute("name", "FeeName[]");
+        newElem.setAttribute("place-holder", "Nhập tên phí");
+        newElem.setAttribute("type", "text");
+        newCell.appendChild(newElem);
+
+        newCell = newRow.insertCell(3);
+        newElem = document.createElement('input');
+        newElem.setAttribute("class", "form-control");
+        newElem.setAttribute("name", "Percent[]");
+        newElem.setAttribute("place-holder", "Nhập tỷ lệ phần trăm");
+        newElem.setAttribute("type", "text");
+        newCell.appendChild(newElem);
+
+
+        newCell = newRow.insertCell(4);
+        newElem = document.createElement('input');
+        newElem.setAttribute("class", "form-control");
+        newElem.setAttribute("name", "FixedCosts[]");
+        newElem.setAttribute("place-holder", "Nhập Giá cố định");
+        newElem.setAttribute("type", "text");
+        newCell.appendChild(newElem);
+
+
+        newCell = newRow.insertCell(5);
+        newElem = document.createElement('input');
+        newElem.setAttribute("class", "form-control");
+        newElem.setAttribute("name", "RequestType[]");
+        newElem.setAttribute("place-holder", "Nhập RequestType/BankCode");
+        newElem.setAttribute("type", "text");
+        newCell.appendChild(newElem);
+
+        newCell = newRow.insertCell(6);
+        newElem = document.createElement('input');
+        newElem.setAttribute("class", "form-control-file form-control");
+        newElem.setAttribute("name", "requestTypeImage");
+        newElem.setAttribute("id", "requestTypeImage");
+        newElem.setAttribute("type", "file");
+        newCell.appendChild(newElem);
+
+        newCell = newRow.insertCell(7);
+        newElem = document.createElement('input');
+        newElem.setAttribute("type", "button");
+        newElem.setAttribute("class", "btn btn-sm btn-danger");
+        newElem.setAttribute("value", "Xoá dòng vừa thêm");
+        newElem.setAttribute("onclick", 'SomeDeleteRowFunction(this)')
+        newCell.appendChild(newElem);
+    }
+
+    window.SomeDeleteRowFunction = function SomeDeleteRowFunction(o) {
+        var p = o.parentNode.parentNode;
+        p.parentNode.removeChild(p);
+    }
+
+</script>

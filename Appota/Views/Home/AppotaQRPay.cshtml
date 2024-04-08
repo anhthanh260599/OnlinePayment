@@ -1,0 +1,53 @@
+﻿@using Appota.Common
+
+@{
+    var qrCode = TempData["QRCode"] as string;
+    // var qrTime = TempData["QRTime"] as string;
+    var amountString = TempData["Amount"] as string;
+    var amount = int.Parse(amountString);
+    var orderId = TempData["orderId"] as string;
+
+    // int.Parse(qrTime);
+}
+
+<div class="container">
+    <div class="row justify-content-center border-1 p-5">
+        <div class="col-5">
+            <div class="row">
+                <div class="col-12">
+                    <h5 class="text-center">Thông tin đơn hàng</h5>
+                </div>
+                <hr />
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <h6 class="text-black-50">Nhà cung cấp</h6>
+                    <div class="row">
+                        <div class="col-2">
+                            <img style="width: 70%" src="~/lib/Content/logo/payment-logo/appota-logo.png" />
+                        </div>
+                        <div class="col-10">
+                            <p class="fw-bold">Thanh toán Appota QR</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <h6 class="text-black-50">Mã đơn hàng</h6>
+                    <p class="fw-bold">@orderId</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <h6 class="text-black-50">Số tiền</h6>
+                    <p class="fw-bold"> @Common.FormatNumber(amount,0)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-7">
+            <img style="width:40%" src="@qrCode" />
+        </div>
+    </div>
+</div>

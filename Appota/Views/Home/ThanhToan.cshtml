@@ -1,0 +1,205 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering;
+
+@model List<Rates>
+
+@{
+    ViewData["Title"] = "Thanh toán";
+    var errorMessage = TempData["ErrorMessage"] as string;
+}
+
+<div class="text-center">
+    <h1 class="display-4">Thanh toán</h1>
+</div>
+
+@if(!string.IsNullOrEmpty(errorMessage))
+{
+    <p class="text-center bg-danger text-white">@errorMessage</p>
+}
+
+<form asp-action="XacNhanThanhToan" method="post">
+    <div class="row">
+        <div class="col-6">
+
+            <h6>Tên người dùng</h6>
+            <input type="text" name="userName" class="form-control"/>
+          
+            <br />
+
+            <h6>1. Chọn số tiền</h6>
+
+            <select name="money" class="form-control" id="money" onchange="updateTransfer()">
+                <option value="100000">100000</option>
+                <option value="200000">200000</option>
+                <option value="300000">300000</option>
+                <option value="400000">400000</option>
+            </select>
+
+            <h6>Nhập số tiền</h6>
+            <input type="number" placeholder="Nhập số tiền" class="form-control" id="moneyInput" onchange="updateTransfer()" min="0" />
+            <br />
+
+            <h6>2. Chọn loại ngoại tệ</h6>
+
+            <select id="currency" class="form-control" onchange="updateTransfer()">
+                @foreach (var item in Model)
+                {
+                    <option value="@item.Transfer">@item.CurrencyCode</option>
+                }
+            </select>
+
+            <h6 class="text-warning">Số tiền quy đổi: <span id="transfer" class="rates">0</span></h6>
+            <br />
+
+            <h6>3. Nội dung thanh toán</h6>
+            <select name="contentPay" class="form-control">
+                <option value="tienVe">Tiền Vé</option>
+            </select>
+            <br />
+
+
+            <h6>4. Phương thức thanh toán</h6>
+            <select name="paymentType" class="form-control" id="drTypePayment">
+                <option name="None" selected value="None">---Vui lòng chọn phương thức thanh toán---</option>
+                <option name="Appota" value="Appota">Appota</option>
+                <option name="Momo" value="Momo">MOMO</option>
+            </select>
+            <br />
+            <div class="form-group" id="load_form_payment" style="display:none;">
+                <h6 class="text-danger"> <label>Chọn phương thực thanh toán: </label></h6>
+                <label><input type="radio" name="requestType" value="APPOTABANK" checked /> Cổng thanh toán APPOTA BANK </label> <br />
+                <label><input type="radio" name="requestType" value="APPOTAQR" /> Thanh toán bằng QR </label> <br />
+            </div>
+            <br />
+
+            <div class="form-group" id="load_form_paymentMomo" style="display:none;">
+                <h6 class="text-danger"> <label>Chọn phương thực thanh toán: </label></h6>
+                <label><input type="radio" name="requestType" value="captureWallet" checked /> Thanh toán bằng QR </label> <br />
+                @* <label><input type="radio" name="requestType" value="payWithVTS" /> Ví trả sau </label> <br /> *@
+                <label><input type="radio" name="requestType" value="payWithATM" /> Thanh toán thẻ nội địa </label> <br />
+                <label><input type="radio" name="requestType" value="payWithCC" /> Thanh toán thẻ quốc tế </label> <br />
+@*                 <label><input type="radio" name="requestType" value="linkWallet" /> Thanh toán liên kết ví </label> <br /> *@
+
+            </div>
+            <br />
+
+            <h6>5. Tóm tắt đơn hàng</h6>
+            <table class="table table-bordered">
+
+                <tbody>
+                    <tr>
+                        <td>Phương thức thanh toán</td>
+                        <td>Appota</td>
+                    </tr>
+                    <tr>
+                        <td>Phí 1 lần giao dịch</td>
+                        <td><span id="FeeOneTime">2200</span> VNĐ</td>
+                    </tr>
+                    <tr>
+                        <td>Phí theo số tiền giao dịch (2.5%)</td>
+                        <td><span id="FeeDepenOnMoney">12500</span> VNĐ</td>
+                    </tr>
+                    <tr>
+                        <td>Tổng tiền</td>
+                        <td><span id="totalPay">104700</span> VNĐ</td>
+                        <input type="text" hidden class="form-control" name="TotalPay" id="totalPayInput" value="104700" />
+                    </tr>
+                </tbody>
+            </table>
+            <div class="col-6">
+                <button type="submit" id="XacNhanThanhToan" class="btn btn-success">Thanh toán</button>
+            </div>
+        </div>
+
+        <div class="col-6">
+            <h3>Quy đổi tiền tệ</h3>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>
+                            Tên loại ngoại tệ
+                        </th>
+                        <th>
+                            Mã ngoại tệ
+                        </th>
+                        <th>
+                            Tiền quy đổi (VNĐ)
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var rates in Model)
+                    {
+                        <tr>
+                            <td>@rates.CurrencyName</td>
+                            <td>@rates.CurrencyCode</td>
+                            <td>@rates.Transfer</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+        </div>
+
+      
+    </div>
+
+</form>
+
+
+
+
+<script>
+    function updateTransfer() {
+        var selectedTransfer = 1
+        var moneyInput = 1
+        var selectElement = document.getElementById("currency");
+
+        var moneySelected = document.getElementById("money");
+        moneyInput = document.getElementById("moneyInput").value;
+        var moneySelectedValue = moneySelected.options[moneySelected.selectedIndex].value
+
+        var money = moneyInput && moneyInput > 0 ? moneyInput : moneySelectedValue;
+
+        selectedTransfer = selectElement.options[selectElement.selectedIndex].value;
+        selectedTransfer = parseFloat(selectedTransfer.replace(/,/g, ''));
+    
+        var transferMoney = money / selectedTransfer
+        document.getElementById("transfer").innerText = transferMoney.toFixed(2)
+
+        var FeeDepenOnMoney = moneyInput && moneyInput > 0 ? moneyInput : moneySelectedValue
+        var FeeDepenOnMoneyValue = FeeDepenOnMoney * 0.025
+        document.getElementById("FeeDepenOnMoney").innerText = FeeDepenOnMoneyValue.toFixed()
+
+        var FeeOneTime = parseFloat(document.getElementById("FeeOneTime").innerText)
+
+        var MoneySpend = moneyInput && moneyInput > 0 ? moneyInput : moneySelectedValue;
+        
+        var TotalPay = FeeDepenOnMoneyValue + FeeOneTime + parseFloat(MoneySpend)
+
+        var totalPayText = TotalPay.toFixed();
+        document.getElementById("totalPay").innerText = totalPayText;
+        document.getElementById("totalPayInput").value = totalPayText;
+
+    }
+    $(document).ready(function () {
+        $('body').on('change', '#drTypePayment', function () {
+            var type = $(this).val();
+            $('#load_form_payment').hide();
+            if (type == "Appota") {
+                $('#load_form_payment').show()
+                $('#load_form_paymentMomo').hide()
+
+            }
+            if (type == "Momo") {
+                $('#load_form_paymentMomo').show()
+                $('#load_form_payment').hide()
+
+            }
+            else {
+                toarst.info("Vui lòng chọn phương thức thanh toán");
+            }
+        });
+    })
+</script>
+
