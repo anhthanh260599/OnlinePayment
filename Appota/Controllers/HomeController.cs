@@ -11,6 +11,7 @@ using Microsoft.VisualStudio.Services.Client.AccountManagement;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using PayPal.Api;
 using System.Data;
 using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
@@ -21,6 +22,8 @@ using System.Text;
 using System.Web;
 using System.Xml;
 using System.Xml.Linq;
+using System.Security.Cryptography.Xml;
+using Appota.Common;
 
 namespace Appota.Controllers
 {
@@ -32,6 +35,7 @@ namespace Appota.Controllers
         public UsersPay user = new UsersPay();
         bool isInitialized = false;
         public ApplicationDbContext db;
+        public static double VNDtoUSD;
 
         public HomeController(ILogger<HomeController> logger, IConfiguration configuration, ApplicationDbContext db)
         {
@@ -41,9 +45,34 @@ namespace Appota.Controllers
             Initialize();
         }
 
-        public ActionResult GateWayEnViet()
+        public async Task<IActionResult> GateWayEnViet()
         {
             var items = db.Payments.Include(p => p.PaymentFees).Where(x=>x.IsActived).ToList();
+
+            var url = "https://justcors.com/l_d26ou2gp0k/https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx?b=10";
+            var httpClient = new HttpClient();
+            var xml = await httpClient.GetStringAsync(url);
+            var xdoc = XDocument.Parse(xml);
+
+            var errorMessage = TempData["ErrorMessage"];
+
+            var exrates = xdoc.Descendants("Exrate")
+                .Select(x => new Rates
+                {
+                    CurrencyCode = (string)x.Attribute("CurrencyCode"),
+                    CurrencyName = (string)x.Attribute("CurrencyName"),
+                    Buy = (string)x.Attribute("Buy"),
+                    Transfer = (string)x.Attribute("Transfer"),
+                    Sell = (string)x.Attribute("Sell")
+                })
+                .ToList();
+
+            var usdTransferRate = exrates.FirstOrDefault(rate => rate.CurrencyCode == "USD")?.Transfer;
+            if (!string.IsNullOrEmpty(usdTransferRate))
+            {
+                VNDtoUSD = double.Parse(usdTransferRate.Replace(",", ""));
+                ViewBag.VNDtoUSD = VNDtoUSD.ToString();
+            }
             return View(items);
         }
 
@@ -76,6 +105,15 @@ namespace Appota.Controllers
                     Sell = (string)x.Attribute("Sell")
                 })
                 .ToList();
+
+            var usdTransferRate = exrates.FirstOrDefault(rate => rate.CurrencyCode == "USD")?.Transfer;
+            if (!string.IsNullOrEmpty(usdTransferRate))
+            {
+                // Loại bỏ dấu phẩy và chuyển đổi thành kiểu int
+                VNDtoUSD = double.Parse(usdTransferRate.Replace(",", ""));
+                ViewBag.VNDtoUSD = VNDtoUSD;
+            }
+
             return View(exrates);
         }
         private static Random random = new Random();
@@ -147,7 +185,7 @@ namespace Appota.Controllers
                         redirectUrl = redirectUrl,
                         signature = signature,
                     };
-                    user.PaymentStatus = "Đang chờ thanh toán";
+                    user.PaymentStatus = "Giao dịch đang xử lý";
                     db.UsersPays.Add(user);
                     db.SaveChanges();
                     using (var client = new HttpClient())
@@ -202,7 +240,7 @@ namespace Appota.Controllers
                         clientIp = clientIp,
                         signature = signature,
                     };
-                    user.PaymentStatus = "Đang chờ thanh toán";
+                    user.PaymentStatus = "Giao dịch đang xử lý";
                     db.UsersPays.Add(user);
                     db.SaveChanges();
                     using (var client = new HttpClient())
@@ -305,7 +343,7 @@ namespace Appota.Controllers
                     extraData = extraData,
                     signature = signature
                 };
-                user.PaymentStatus = "Đang chờ thanh toán";
+                user.PaymentStatus = "Giao dịch đang xử lý";
                 db.UsersPays.Add(user);
                 db.SaveChanges();
 
@@ -466,7 +504,7 @@ namespace Appota.Controllers
                         redirectUrl = redirectUrl,
                         signature = signature,
                     };
-                    user.PaymentStatus = "Đang chờ thanh toán";
+                    user.PaymentStatus = "Giao dịch đang xử lý";
                     db.UsersPays.Add(user);
                     db.SaveChanges();
                     using (var client = new HttpClient())
@@ -558,7 +596,7 @@ namespace Appota.Controllers
                     extraData = extraData,
                     signature = signature
                 };
-                user.PaymentStatus = "Đang chờ thanh toán";
+                user.PaymentStatus = "Giao dịch đang xử lý";
                 db.UsersPays.Add(user);
                 db.SaveChanges();
 
@@ -590,6 +628,33 @@ namespace Appota.Controllers
                     }
                 }
             }
+            
+            else if (paymentType == "Paypal")
+            {
+                if (requestType != null)
+                {
+                    var orderId = RandomString(10);
+                    user.Name = userName;
+                    user.PaymentType = paymentType;
+                    user.Amount = TotalPay;
+                    user.CreatedDate = DateTime.Now;
+                    user.OrderId = orderId;
+                    user.PaymentStatus = "Giao dịch đang xử lý";
+                    db.UsersPays.Add(user);
+                    db.SaveChanges();
+                    double USD;
+                    USD = (double)TotalPay / VNDtoUSD;
+                    USD = Math.Round(USD,2);
+
+                    TempData["orderId"] = orderId;
+                    TempData["TotalPay"] = USD.ToString();
+                    return RedirectToAction("PaymentWithPaypal", "Home");
+
+                }
+
+                return RedirectToAction("GateWayEnViet", "Home");
+            }
+            
             else
             {
                 TempData["ErrorMessage"] = "Vui lòng chọn phương thức thanh toán";
@@ -799,6 +864,249 @@ namespace Appota.Controllers
             }
         }
 
+
+        //// Thanh toán Paypal
+        
+        public ActionResult PaymentWithPaypal(string Cancel = null)
+        {
+            var TotalPay = TempData["TotalPay"] as string;
+            var orderId = TempData["orderId"] as string;
+            //getting the apiContext  
+            APIContext apiContext = PaypalConfiguration.GetAPIContext();
+            try
+            {
+                //A resource representing a Payer that funds a payment Payment Method as paypal  
+                //Payer Id will be returned when payment proceeds or click to pay  
+                string payerId = Request.Query["PayerID"];
+                if (string.IsNullOrEmpty(payerId))
+                {
+                    //this section will be executed first because PayerID doesn't exist  
+                    //it is returned by the create function call of the payment class  
+                    // Creating a payment  
+                    // baseURL is the url on which paypal sendsback the data.  
+                    string baseURI = HttpContext.Request.Scheme + "://" + HttpContext.Request.Host + "/Home/KetQuaThanhToan?";
+                    //here we are generating guid for storing the paymentID received in session  
+                    //which will be used in the payment execution  
+                    var guid = Convert.ToString((new Random()).Next(100000));
+                    //CreatePayment function gives us the payment approval url  
+                    //on which payer is redirected for paypal account payment  
+                    var createdPayment = this.CreatePayment(apiContext, baseURI + "guid=" + guid);
+                    //get links returned from paypal in response to Create function call  
+                    var links = createdPayment.links.GetEnumerator();
+                    string paypalRedirectUrl = null;
+                    while (links.MoveNext())
+                    {
+                        Links lnk = links.Current;
+                        if (lnk.rel.ToLower().Trim().Equals("approval_url"))
+                        {
+                            //saving the payapalredirect URL to which user will be redirected for payment  
+                            paypalRedirectUrl = lnk.href;
+                        }
+                    }
+                    // saving the paymentID in the key guid  
+                    HttpContext.Session.SetString(guid, createdPayment.id);
+                    return Redirect(paypalRedirectUrl);
+                }
+                else
+                {
+                    // This function exectues after receving all parameters for the payment  
+                    var guid = Request.Query["guid"];
+                    var executedPayment = ExecutePayment(apiContext, payerId, HttpContext.Session.GetString(guid));
+                    //If executed payment failed then we will show payment failure message to user  
+                    if (executedPayment.state.ToLower() != "approved")
+                    {
+                        return View("KetQuaThanhToan");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return View("KetQuaThanhToan");
+            }
+            ////on successful payment, show success page to user.  
+
+            var item = db.UsersPays.Where(x => x.OrderId == orderId).FirstOrDefault();
+            if(item != null)
+            {
+                item.PaymentStatus = "Thanh toán thành công";
+            }
+
+            return View("KetQuaThanhToan");
+        }
+
+        public async Task<IActionResult> KetQuaThanhToan()
+        {
+            string url = Request.GetDisplayUrl();
+
+            // Phân tích tham số từ URL
+            var queryString = new Uri(url).Query;
+            var queryParameters = HttpUtility.ParseQueryString(queryString);
+
+            // Lấy các giá trị từ các tham số
+            string partnerCode = queryParameters["partnerCode"];
+            string apiKey = queryParameters["apiKey"];
+            string amountString = queryParameters["amount"];
+            long amout = 0;
+            if (amountString != null)
+            {
+                amout = int.Parse(amountString);
+
+            }
+            string currency = queryParameters["currency"];
+            string orderId = queryParameters["orderId"];
+            string appotapayTransId = queryParameters["appotapayTransId"];
+            string bankCode = queryParameters["bankCode"];
+            string extraData = queryParameters["extraData"];
+            string message = queryParameters["message"];
+            string paymentMethod = queryParameters["paymentMethod"];
+            string paymentType = queryParameters["paymentType"];
+            string transactionTs = queryParameters["transactionTs"];
+            string guid = queryParameters["guid"];
+            string paymentId = queryParameters["paymentId"];
+            string token = queryParameters["token"];
+            string PayerID = queryParameters["PayerID"];
+            string resultCode = "";
+            string errorCode = "";
+            int newResultCode = -1;
+            string resultMessage = "";
+
+            if (partnerCode == "MOMO")
+            {
+                 resultCode = queryParameters["resultCode"];
+                 newResultCode = int.Parse(resultCode);
+                if (newResultCode  == 0)
+                {
+                    resultMessage = "Thanh toán thành công";
+                }
+                else
+                {
+                    resultMessage = "Thanh toán thất bại";
+                }
+                ViewBag.KetQuaThanhToan = resultMessage;
+                ViewBag.PartnerCode = partnerCode;
+            }
+            if (partnerCode == "APPOTAPAY")
+            {
+                errorCode = queryParameters["errorCode"];
+                newResultCode = int.Parse(errorCode);
+                if (newResultCode == 0)
+                {
+                    resultMessage = "Thanh toán thành công";
+                }
+                else
+                {
+                    resultMessage = "Thanh toán thất bại";
+                }
+                ViewBag.KetQuaThanhToan = resultMessage;
+                ViewBag.PartnerCode = partnerCode;
+            }
+            double USDAmoutVND = 0;
+            if (PayerID != null) //Paypal
+            {
+                orderId = TempData["orderId"] as string;
+                var TotalPay = TempData["TotalPay"] as string;
+                var USD = double.Parse(TotalPay);
+                USDAmoutVND = USD * VNDtoUSD;
+                partnerCode = "PAYPAL";
+                newResultCode = 0;
+                resultMessage = "Thanh toán thành công";
+                ViewBag.KetQuaThanhToan = resultMessage;
+                ViewBag.PartnerCode = partnerCode;
+            }
+
+            var user = db.UsersPays.Where(x => x.OrderId == orderId).FirstOrDefault();
+            if (user != null)
+            {
+                db.Attach(user);
+                if (user.PaymentType == "Paypal")
+                {
+                    double roundedAmount = Math.Round(USDAmoutVND, 2);
+                    user.Amount = (long)roundedAmount;
+                }
+                user.PaymentStatus = resultMessage;
+                user.ResultCode = newResultCode;
+                db.Entry(user).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+                db.SaveChanges();
+            }
+            return View(user);
+        }
+
+        private PayPal.Api.Payment payment;
+        private PayPal.Api.Payment ExecutePayment(APIContext apiContext, string payerId, string paymentId)
+        {
+            var paymentExecution = new PaymentExecution()
+            {
+                payer_id = payerId
+            };
+            this.payment = new PayPal.Api.Payment()
+            {
+                id = paymentId
+            };
+            return this.payment.Execute(apiContext, paymentExecution);
+        }
+        private PayPal.Api.Payment CreatePayment(APIContext apiContext, string redirectUrl)
+        {
+            var TotalPay = TempData["TotalPay"] as string;
+            var orderId = TempData["orderId"] as string;
+            var itemList = new ItemList()
+            {
+                items = new List<Item>()
+            };
+
+            //Adding Item Details like name, currency, price etc  
+            itemList.items.Add(new Item()
+            {
+                name = orderId,
+                currency = "USD",
+                price = TotalPay,
+                quantity = "1",
+                sku = "1"
+            });
+
+            var payer = new Payer()
+            {
+                payment_method = "paypal"
+            };
+            // Configure Redirect Urls here with RedirectUrls object  
+            var redirUrls = new RedirectUrls()
+            {
+                cancel_url = redirectUrl + "&Cancel=true",
+                return_url = redirectUrl
+            };
+            // Adding Tax, shipping and Subtotal details  
+            var details = new Details()
+            {
+                tax = "0",
+                shipping = "0",
+                subtotal = TotalPay
+            };
+            //Final amount with details  
+            var amount = new Amount()
+            {
+                currency = "USD",
+                total = (Convert.ToDecimal(details.tax) + Convert.ToDecimal(details.shipping) + Convert.ToDecimal(details.subtotal)).ToString(), // Cập nhật total
+                details = details
+            };
+            var transactionList = new List<Transaction>();
+            // Adding description about the transaction  
+            var paypalOrderId = DateTime.Now.Ticks;
+            transactionList.Add(new Transaction()
+            {
+                description = $"Invoice #{paypalOrderId}",
+                invoice_number = paypalOrderId.ToString(), //Generate an Invoice No    
+                amount = amount,
+                item_list = itemList
+            });
+            this.payment = new PayPal.Api.Payment()
+            {
+                intent = "sale",
+                payer = payer,
+                transactions = transactionList,
+                redirect_urls = redirUrls
+            };
+            // Create a payment using a APIContext  
+            return this.payment.Create(apiContext);
+        }
 
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

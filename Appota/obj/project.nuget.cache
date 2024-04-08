@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "DLva8ztLxITfAFzaSYkBgFcU0fBsGHERSUlHh5kMi2B4BbvMgoQC5jyN/ow05Ix1xJUlsNNyuQVAHawVOeq7LA==",
+  "dgSpecHash": "o85VQFurc2b/dfr0qTIIA6PknPP4D8o6iYHKSnX3IRft6N7Lh9ywGV/2ISzP3LbShqIWPorn+RwoOWl3KKmZ0g==",
   "success": true,
   "projectFilePath": "D:\\Workspace\\OnlinePayment-Github\\OnlinePayment\\Appota\\Appota.csproj",
   "expectedPackageFiles": [
@@ -128,6 +128,7 @@
     "C:\\Users\\ADMIN\\.nuget\\packages\\nuget.projectmodel\\6.6.1\\nuget.projectmodel.6.6.1.nupkg.sha512",
     "C:\\Users\\ADMIN\\.nuget\\packages\\nuget.protocol\\6.6.1\\nuget.protocol.6.6.1.nupkg.sha512",
     "C:\\Users\\ADMIN\\.nuget\\packages\\nuget.versioning\\6.6.1\\nuget.versioning.6.6.1.nupkg.sha512",
+    "C:\\Users\\ADMIN\\.nuget\\packages\\paypal\\1.9.1\\paypal.1.9.1.nupkg.sha512",
     "C:\\Users\\ADMIN\\.nuget\\packages\\runtime.debian.8-x64.runtime.native.system.security.cryptography.openssl\\4.3.0\\runtime.debian.8-x64.runtime.native.system.security.cryptography.openssl.4.3.0.nupkg.sha512",
     "C:\\Users\\ADMIN\\.nuget\\packages\\runtime.fedora.23-x64.runtime.native.system.security.cryptography.openssl\\4.3.0\\runtime.fedora.23-x64.runtime.native.system.security.cryptography.openssl.4.3.0.nupkg.sha512",
     "C:\\Users\\ADMIN\\.nuget\\packages\\runtime.fedora.24-x64.runtime.native.system.security.cryptography.openssl\\4.3.0\\runtime.fedora.24-x64.runtime.native.system.security.cryptography.openssl.4.3.0.nupkg.sha512",
@@ -264,6 +265,16 @@
       "warningLevel": 1,
       "message": "Appota depends on Microsoft.EntityFrameworkCore.Tools (>= 7.0.0-preview.7.20365.15) but Microsoft.EntityFrameworkCore.Tools 7.0.0-preview.7.20365.15 was not found. An approximate best match of Microsoft.EntityFrameworkCore.Tools 7.0.0-preview.7.22376.2 was resolved.",
       "libraryId": "Microsoft.EntityFrameworkCore.Tools",
+      "targetGraphs": [
+        "net7.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'PayPal 1.9.1' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net7.0'. This package may not be fully compatible with your project.",
+      "libraryId": "PayPal",
       "targetGraphs": [
         "net7.0"
       ]

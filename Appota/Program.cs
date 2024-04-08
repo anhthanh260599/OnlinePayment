@@ -1,12 +1,16 @@
-
+﻿
 using Appota.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddSession(); // Thêm dịch vụ Session vào container
+
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -35,6 +39,9 @@ app.UseRouting();
 
 app.UseAuthorization();
 
+app.UseSession(); // Kích hoạt việc sử dụng Session
+
+
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllerRoute(
@@ -46,5 +53,16 @@ app.UseEndpoints(endpoints =>
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.Run(async context =>
+{
+    var session = context.RequestServices.GetRequiredService<ISession>();
+    session.SetString("key", "value"); // Đặt giá trị vào Session
+
+    // Đọc giá trị từ Session
+    var value = session.GetString("key");
+
+    await context.Response.WriteAsync($"Session value: {value}");
+});
 
 app.Run();
