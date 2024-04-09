@@ -49,8 +49,8 @@
             }
 
         .radio-button input[type="radio"]:checked + label {
-            background-color: #effaf4; /*CSS khi check vào nút*/
-            border: 1px solid #92deb4;
+            background-color: #FFF5EE; /*CSS khi check vào nút*/
+            border: 1px solid #f5821f;
         }
 
         .radio-button img {
@@ -60,14 +60,19 @@
         }
 
     .btn__xac-nhan {
-        background-color: #30bf71; /* CSS nút Submit*/
+        background-color: #f5821f; /* CSS nút Submit*/
         color: white;
+    }
+
+    .btn__xac-nhan:hover {
+        color: white;
+        opacity: 0.5;
     }
 
     .paymentType__header {
         margin-left: 24px;
         margin-top: 12px;
-        color: #30bf71;
+        color: #f5821f;
         font-size: 14px;
     }
 
@@ -75,12 +80,37 @@
         /* margin-left: 18px; */
         padding: 0 22px;
     }
+
+
+    #countdownContainer {
+        display: flex;
+        margin: 12px;
+    }
+
+    .countdownBox {
+        background-color: #f5821f;
+        color: white;
+        margin: 0 2px;
+        padding: 5px;
+        border: 2px solid #dbdbdb;
+        border-radius: 5px;
+        font-size: 18px;
+        width: 40px;
+        text-align: center;
+    }
+
+
 </style>
 
 <hr />
 
 <h3>Thông tin thanh toán</h3>
 
+<div id="countdownContainer">
+    <div class="countdownBox" id="hoursBox">00</div>
+    <div class="countdownBox" id="minutesBox">00</div>
+    <div class="countdownBox" id="secondsBox">00</div>
+</div>
 
 <form asp-action="SubmitThanhToan" method="post">
     <div class="container">
@@ -304,6 +334,34 @@
         });
 
     });
+
+    var countDownTime = 5 * 60; // 5 phút
+    var hoursBox = document.getElementById('hoursBox');
+    var minutesBox = document.getElementById('minutesBox');
+    var secondsBox = document.getElementById('secondsBox');
+
+    var countDownTimer = setInterval(function () {
+        var hours = Math.floor(countDownTime / 3600);
+        var minutes = Math.floor((countDownTime % 3600) / 60);
+        var seconds = countDownTime % 60;
+
+        // Định dạng thời gian hiển thị HH:mm:ss
+        hoursBox.textContent = ('0' + hours).slice(-2);
+        minutesBox.textContent = ('0' + minutes).slice(-2);
+        secondsBox.textContent = ('0' + seconds).slice(-2);
+
+        countDownTime--;
+
+        if (countDownTime < 0) {
+            clearInterval(countDownTimer);
+            window.location.href = '@Url.Action("Index", "Home")';
+        }
+    }, 1000);
+
+    window.onbeforeunload = function () {
+        clearInterval(countDownTimer);
+    };
+
 
     var paymentNames = document.getElementsByClassName("payment-name");
     for (var i = 0; i < paymentNames.length; i++) {

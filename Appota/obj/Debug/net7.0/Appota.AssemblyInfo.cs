@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Appota")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1332b78ee1648b37fbe2516bc88854ddaa88637a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b3d11e39253f11433779c2e9b25482b7d89ffc92")]
 [assembly: System.Reflection.AssemblyProductAttribute("Appota")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Appota")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
