@@ -166,12 +166,12 @@
                                                 <img style="width:40px;height:40px;" src="@fee.Image" />
                                             </td>
                                             <td> <input name="FeeName[]" value="@fee.Name" type="text" class="form-control" placeholder="Nhập tên phí" />   </td>
-                                            <td> <input name="Percent[]" value="@fee.Percent" type="text" class="form-control" placeholder="Nhập tỷ lệ %" />  </td>
-                                            <td> <input name="FixedCosts[]" value="@fee.FixedCosts" type="text" class="form-control" placeholder="Nhập giá cố định" /></td>
+                                            <td> <input name="Percent[]" value="@fee.Percent" step="any" min="0" type="number" class="form-control" placeholder="Nhập tỷ lệ %" />  </td>
+                                            <td> <input name="FixedCosts[]" value="@fee.FixedCosts" step="any" type="number" min="0" class="form-control" placeholder="Nhập giá cố định" /></td>
                                             <td> <input name="RequestType[]" value="@fee.RequestType" type="text" class="form-control" placeholder="Nhập RequestType/BankCode" /></td>
                                             <td class="custom-file">
                                                 <input type="file" class="form-control-file requestTypeImageInputFile form-control" id="requestTypeImage" value="@fee.Image">
-                                                <input type="text" name="requestTypeImage[]" class="requestTypeImageInputValue" value="@fee.Image" />
+                                                <input type="text" hidden name="requestTypeImage[]" class="requestTypeImageInputValue" value="@fee.Image" />
                                             </td>
 
                                             <td>
@@ -184,7 +184,7 @@
                                     }
                                 </tbody>
                             </table>
-                            <input type="button" class="button-add-line btn btn-primary" value="Thêm phí" onclick="addField('feeTable@(item.Id)');" />
+                            <input type="button" class="button-add-line btn btn-primary addFee" id="addFee" data-tableid="@item.Id" value="Thêm phí" @* onclick="addField('feeTable@(item.Id)');" *@ />
                             <button type="submit" id="submitForm" class="btn btn-success">Lưu</button>
                         }
 
@@ -211,6 +211,89 @@
 </div>
 
 <script>
+
+
+    // function addField(table) {
+    //     var tableRef = document.getElementById(table);
+    //     var newRow = tableRef.insertRow(-1);
+
+    //     var newCell = newRow.insertCell(0);
+    //     var newElem = document.createElement('label');
+    //     newElem.setAttribute("class", "switch");
+
+    //     newCell.appendChild(newElem);
+
+    //     newCell = newRow.insertCell(1);
+    //     newElem = document.createElement('img');
+    //     newElem.setAttribute("style", "width:40px;height:40px;");
+    //     newElem.setAttribute("src", "/lib/Content/logo/payment-logo/enviet-logo.png");
+
+    //     newCell.appendChild(newElem);
+
+    //     newCell = newRow.insertCell(2);
+    //     newElem = document.createElement('input');
+    //     newElem.setAttribute("class", "form-control");
+    //     newElem.setAttribute("name", "FeeName[]");
+    //     newElem.setAttribute("place-holder", "Nhập tên phí");
+    //     newElem.setAttribute("type", "text");
+    //     newCell.appendChild(newElem);
+
+    //     newCell = newRow.insertCell(3);
+    //     newElem = document.createElement('input');
+    //     newElem.setAttribute("class", "form-control");
+    //     newElem.setAttribute("name", "Percent[]");
+    //     newElem.setAttribute("place-holder", "Nhập tỷ lệ phần trăm");
+    //     newElem.setAttribute("type", "text");
+    //     newCell.appendChild(newElem);
+
+
+    //     newCell = newRow.insertCell(4);
+    //     newElem = document.createElement('input');
+    //     newElem.setAttribute("class", "form-control");
+    //     newElem.setAttribute("name", "FixedCosts[]");
+    //     newElem.setAttribute("place-holder", "Nhập Giá cố định");
+    //     newElem.setAttribute("type", "text");
+    //     newCell.appendChild(newElem);
+
+
+    //     newCell = newRow.insertCell(5);
+    //     newElem = document.createElement('input');
+    //     newElem.setAttribute("class", "form-control");
+    //     newElem.setAttribute("name", "RequestType[]");
+    //     newElem.setAttribute("place-holder", "Nhập RequestType/BankCode");
+    //     newElem.setAttribute("type", "text");
+    //     newCell.appendChild(newElem);
+
+    //     newCell = newRow.insertCell(6);
+    //     newElem = document.createElement('input');
+    //     newElem.setAttribute("class", "form-control-file form-control requestTypeImageInputFile");
+    //     newElem.setAttribute("id", "requestTypeImage");
+    //     newElem.setAttribute("value", "");
+    //     newElem.setAttribute("type", "file");
+    //     newCell.appendChild(newElem);
+    //     newElem = document.createElement('input');
+    //     newElem.setAttribute("name", "requestTypeImage[]");
+    //     newElem.setAttribute("class", "requestTypeImageInputValue");
+    //     // newElem.setAttribute("value", "Đang cập nhật");
+    //     // newElem.setAttribute("disabled", "disabled");
+    //     newElem.setAttribute("type", "text");
+    //     newCell.appendChild(newElem);
+
+
+    //     newCell = newRow.insertCell(7);
+    //     newElem = document.createElement('input');
+    //     newElem.setAttribute("type", "button");
+    //     newElem.setAttribute("class", "btn btn-sm btn-danger");
+    //     newElem.setAttribute("value", "Xoá dòng vừa thêm");
+    //     newElem.setAttribute("onclick", 'SomeDeleteRowFunction(this)')
+    //     newCell.appendChild(newElem);
+    // }
+
+    // window.SomeDeleteRowFunction = function SomeDeleteRowFunction(o) {
+    //     var p = o.parentNode.parentNode;
+    //     p.parentNode.removeChild(p);
+    // }
+
     $(document).ready(function () {
         $('body').on('change', '.btnActive', function () {
             var checkbox = $(this);
@@ -295,7 +378,28 @@
                     }
                 })
             }
-        })
+        });
+
+        // Xử lý sự kiện click cho các nút "Thêm phí" chung
+        $(".addFee").click(function () {
+            var tableId = $(this).data('tableid');
+            var targetTable = $("#feeTable" + tableId);
+            console.log(targetTable);
+            var newRow = targetTable.find(".feeRow").first().clone();
+            newRow.find('input').val('');
+
+            newRow.find('td:nth-child(2) img').attr('src', '/lib/Content/Uploads/logo/enviet-logo.png');
+            var removeButton = $('<button type="button" class="btn btn-danger removeFee">Xóa</button>');
+            newRow.find('td:nth-child(8)').empty().append(removeButton);
+
+
+            // Thêm dòng mới vào bảng
+            targetTable.find("tbody").append(newRow);
+        });
+
+        $(document).on('click', '.removeFee', function () {
+            $(this).closest('tr').remove();
+        });
 
         $('body').on('change', '.requestTypeImageInputFile', function () {
             var input = $(this);
@@ -307,86 +411,5 @@
         });
 
     });
-
-
-    function addField(table) {
-        var tableRef = document.getElementById(table);
-        var newRow = tableRef.insertRow(-1);
-
-        var newCell = newRow.insertCell(0);
-        var newElem = document.createElement('label');
-        newElem.setAttribute("class", "switch");
-
-        newCell.appendChild(newElem);
-
-        newCell = newRow.insertCell(1);
-        newElem = document.createElement('img');
-        newElem.setAttribute("style", "width:40px;height:40px;");
-        newElem.setAttribute("src", "/lib/Content/logo/payment-logo/enviet-logo.png");
-
-        newCell.appendChild(newElem);
-
-        newCell = newRow.insertCell(2);
-        newElem = document.createElement('input');
-        newElem.setAttribute("class", "form-control");
-        newElem.setAttribute("name", "FeeName[]");
-        newElem.setAttribute("place-holder", "Nhập tên phí");
-        newElem.setAttribute("type", "text");
-        newCell.appendChild(newElem);
-
-        newCell = newRow.insertCell(3);
-        newElem = document.createElement('input');
-        newElem.setAttribute("class", "form-control");
-        newElem.setAttribute("name", "Percent[]");
-        newElem.setAttribute("place-holder", "Nhập tỷ lệ phần trăm");
-        newElem.setAttribute("type", "text");
-        newCell.appendChild(newElem);
-
-
-        newCell = newRow.insertCell(4);
-        newElem = document.createElement('input');
-        newElem.setAttribute("class", "form-control");
-        newElem.setAttribute("name", "FixedCosts[]");
-        newElem.setAttribute("place-holder", "Nhập Giá cố định");
-        newElem.setAttribute("type", "text");
-        newCell.appendChild(newElem);
-
-
-        newCell = newRow.insertCell(5);
-        newElem = document.createElement('input');
-        newElem.setAttribute("class", "form-control");
-        newElem.setAttribute("name", "RequestType[]");
-        newElem.setAttribute("place-holder", "Nhập RequestType/BankCode");
-        newElem.setAttribute("type", "text");
-        newCell.appendChild(newElem);
-
-        newCell = newRow.insertCell(6);
-        newElem = document.createElement('input');
-        newElem.setAttribute("class", "form-control-file form-control requestTypeImageInputFile");
-        newElem.setAttribute("id", "requestTypeImage");
-        newElem.setAttribute("value", "");
-        newElem.setAttribute("type", "file");
-        newCell.appendChild(newElem);
-        newElem = document.createElement('input');
-        newElem.setAttribute("name", "requestTypeImage[]");
-        newElem.setAttribute("class", "requestTypeImageInputValue");
-        newElem.setAttribute("value", ""); 
-        newElem.setAttribute("type", "text");
-        newCell.appendChild(newElem);
-
-
-        newCell = newRow.insertCell(7);
-        newElem = document.createElement('input');
-        newElem.setAttribute("type", "button");
-        newElem.setAttribute("class", "btn btn-sm btn-danger");
-        newElem.setAttribute("value", "Xoá dòng vừa thêm");
-        newElem.setAttribute("onclick", 'SomeDeleteRowFunction(this)')
-        newCell.appendChild(newElem);
-    }
-
-    window.SomeDeleteRowFunction = function SomeDeleteRowFunction(o) {
-        var p = o.parentNode.parentNode;
-        p.parentNode.removeChild(p);
-    }
 
 </script>

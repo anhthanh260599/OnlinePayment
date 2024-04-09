@@ -3,3 +3,19 @@
 ################################################################################
 
 /.vs
+/Appota/bin/Debug/net7.0/Appota.dll
+/Appota/bin/Debug/net7.0/Appota.exe
+/Appota/bin/Debug/net7.0/Appota.pdb
+/Appota/bin/Debug/net7.0/Appota.staticwebassets.runtime.json
+/Appota/obj/Debug/net7.0/ref/Appota.dll
+/Appota/obj/Debug/net7.0/refint/Appota.dll
+/Appota/obj/Debug/net7.0/staticwebassets/msbuild.Appota.Microsoft.AspNetCore.StaticWebAssets.props
+/Appota/obj/Debug/net7.0/apphost.exe
+/Appota/obj/Debug/net7.0/Appota.AssemblyInfo.cs
+/Appota/obj/Debug/net7.0/Appota.AssemblyInfoInputs.cache
+/Appota/obj/Debug/net7.0/Appota.dll
+/Appota/obj/Debug/net7.0/Appota.pdb
+/Appota/obj/Debug/net7.0/Appota.sourcelink.json
+/Appota/obj/Debug/net7.0/staticwebassets.build.json
+/Appota/obj/Debug/net7.0/staticwebassets.development.json
+/Appota/obj/Debug/net7.0/staticwebassets.pack.json

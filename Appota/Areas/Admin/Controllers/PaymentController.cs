@@ -154,26 +154,35 @@ namespace Appota.Areas.Admin.Controllers
                 // Xử lý danh sách Phí
                 if (payment != null)
                 {
-                    // Kiểm tra xem có dữ liệu trong mảng không
                     if (FeeName != null && Percent != null && RequestType != null)
                     {
+                        int imageCount = requestTypeImage != null ? requestTypeImage.Length : 0;
+
                         for (int i = 0; i < FeeName.Length; i++)
                         {
                             string feeUniqueFileName = "";
-                            // Kiểm tra xem có hình ảnh được chọn không
-                            if (!string.IsNullOrEmpty(requestTypeImage[i]))
+
+                            // Kiểm tra chỉ số hiện tại có nằm trong phạm vi của mảng requestTypeImage không
+                            if (i < imageCount && !string.IsNullOrEmpty(requestTypeImage[i]))
                             {
-                                
                                 // Sử dụng đường dẫn đã được chọn
                                 feeUniqueFileName = requestTypeImage[i];
                             }
-
-                            if (requestTypeImage[i] == null || requestTypeImage[i] == "")
+                            else
                             {
+                                // Nếu không, gán giá trị mặc định
+                                feeUniqueFileName = "/lib/Content/Uploads/logo/enviet-logo.png";
+                            }
+
+
+                            // Cập nhật mảng requestTypeImage
+                            if (i >= imageCount)
+                            {
+                                Array.Resize(ref requestTypeImage, i + 1);
                                 requestTypeImage[i] = "/lib/Content/Uploads/logo/enviet-logo.png";
                             }
 
-                            // Tên tệp mới
+                            // Tạo Tên tệp mới
                             string fileName = Path.GetFileName(feeUniqueFileName);
                             string filePath = Path.Combine("wwwroot", "lib", "Content", "Uploads", "logo", fileName);
 
