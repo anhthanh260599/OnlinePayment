@@ -38,16 +38,15 @@ namespace Appota.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Add(Payment model, string[] FeeName, double[] Percent, string[] RequestType, decimal[] FixedCosts, IFormFile imageFile, List<IFormFile> requestTypeImage)
+        public IActionResult Add(Payment model, string[] FeeName, double[] Percent, string[] RequestType, decimal[] FixedCosts, IFormFile imageFile, string[] requestTypeImage)
         {
             try
             {
-
                 model.IsActived = true;
                 if (imageFile != null && imageFile.Length > 0)
                 {
                     string uploadsFolder = Path.Combine(webHostEnvironment.WebRootPath, "lib", "Content", "Uploads", "logo");
-                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + imageFile.FileName;
+                    string uniqueFileName = imageFile.FileName;
                     string filePath = Path.Combine(uploadsFolder, uniqueFileName);
                     using (var fileStream = new FileStream(filePath, FileMode.Create))
                     {
@@ -63,18 +62,31 @@ namespace Appota.Areas.Admin.Controllers
                 {
                     for (int i = 0; i < FeeName.Length; i++)
                     {
-                        string feeUniqueFileName = null;
-                        if (requestTypeImage != null && requestTypeImage.Count > i && requestTypeImage[i] != null && requestTypeImage[i].Length > 0)
+                        string feeUniqueFileName = "";
+
+                        // Kiểm tra xem có hình ảnh được chọn không
+                        if (!string.IsNullOrEmpty(requestTypeImage[i]))
                         {
-                            // Xử lý hình ảnh cho từng phần tử trong mảng requestTypeImage
-                            string uploadsFolder = Path.Combine(webHostEnvironment.WebRootPath, "lib", "Content", "Uploads", "logo");
-                            feeUniqueFileName = Guid.NewGuid().ToString() + "_" + requestTypeImage[i].FileName;
-                            string filePath = Path.Combine(uploadsFolder, feeUniqueFileName);
-                            using (var fileStream = new FileStream(filePath, FileMode.Create))
-                            {
-                                requestTypeImage[i].CopyTo(fileStream);
-                            }
-                            // Thêm hình ảnh vào đối tượng PaymentFee
+                            // Sử dụng đường dẫn đã được chọn
+                            feeUniqueFileName = requestTypeImage[i];
+                        }
+
+                        // Tên tệp mới
+                        string fileName = Path.GetFileName(feeUniqueFileName);
+                        string filePath = Path.Combine("wwwroot", "lib", "Content", "Uploads", "logo", fileName);
+
+                        // Kiểm tra xem tệp đã tồn tại hay chưa
+                        if (System.IO.File.Exists(filePath))
+                        {
+                            // Nếu tệp đã tồn tại, ghi đè lên tệp cũ
+                            // Đường dẫn của hình ảnh cần được cập nhật
+                            feeUniqueFileName = "/lib/Content/Uploads/logo/" + fileName;
+                        }
+                        else
+                        {
+                            // Nếu tệp không tồn tại, lưu tên tệp mới vào thư mục
+                            System.IO.File.Move(requestTypeImage[i], filePath);
+                            feeUniqueFileName = "/lib/Content/Uploads/logo/" + fileName;
                         }
 
                         PaymentFee paymentFee = new PaymentFee
@@ -86,7 +98,7 @@ namespace Appota.Areas.Admin.Controllers
                             IsActived = true,
                             PaymentId = model.Id,
                             PaymentName = model.Name,
-                            Image = feeUniqueFileName != null ? "/lib/Content/Uploads/logo/" + feeUniqueFileName : "/lib/Content/logo/payment-logo/enviet-logo.png"
+                            Image = feeUniqueFileName != null ? feeUniqueFileName : "/lib/Content/logo/payment-logo/enviet-logo.png"
                         };
                         db.PaymentsFee.Add(paymentFee);
                     }
@@ -114,7 +126,7 @@ namespace Appota.Areas.Admin.Controllers
                 {
                     // Xử lý hình ảnh ở đây, ví dụ lưu vào thư mục và cập nhật đường dẫn trong cơ sở dữ liệu
                     string uploadsFolder = Path.Combine(webHostEnvironment.WebRootPath, "lib", "Content", "Uploads", "logo");
-                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + PaymentImage.FileName;
+                    string uniqueFileName = PaymentImage.FileName;
                     string filePath = Path.Combine(uploadsFolder, uniqueFileName);
                     using (var fileStream = new FileStream(filePath, FileMode.Create))
                     {
@@ -134,7 +146,7 @@ namespace Appota.Areas.Admin.Controllers
 
 
         [HttpPost]
-        public ActionResult Edit(string[] FeeName, double[] Percent, string[] RequestType, decimal[] FixedCosts, int PaymentID, List<IFormFile> requestTypeImage)
+        public ActionResult Edit(string[] FeeName, double[] Percent, string[] RequestType, decimal[] FixedCosts, int PaymentID, string[] requestTypeImage)
         {
             try
             {
@@ -142,25 +154,50 @@ namespace Appota.Areas.Admin.Controllers
                 // Xử lý danh sách Phí
                 if (payment != null)
                 {
-                    // Kiểm tra xem có dữ liệu trong mảng không
                     if (FeeName != null && Percent != null && RequestType != null)
                     {
-                        string[] feeUniqueFileName = new string[FeeName.Length];
+                        int imageCount = requestTypeImage != null ? requestTypeImage.Length : 0;
+
                         for (int i = 0; i < FeeName.Length; i++)
                         {
-                            if (requestTypeImage != null && requestTypeImage.Count > i && requestTypeImage[i] != null && requestTypeImage[i].Length > 0)
+                            string feeUniqueFileName = "";
+
+                            // Kiểm tra chỉ số hiện tại có nằm trong phạm vi của mảng requestTypeImage không
+                            if (i < imageCount && !string.IsNullOrEmpty(requestTypeImage[i]))
                             {
-                                string uploadsFolder = Path.Combine(webHostEnvironment.WebRootPath, "lib", "Content", "Uploads", "logo");
-                                feeUniqueFileName[i] = Guid.NewGuid().ToString() + "_" + requestTypeImage[i].FileName;
-                                string filePath = Path.Combine(uploadsFolder, feeUniqueFileName[i]);
-                                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                                {
-                                    requestTypeImage[i].CopyTo(fileStream);
-                                }
+                                // Sử dụng đường dẫn đã được chọn
+                                feeUniqueFileName = requestTypeImage[i];
                             }
                             else
                             {
-                                feeUniqueFileName[i] = "";
+                                // Nếu không, gán giá trị mặc định
+                                feeUniqueFileName = "/lib/Content/Uploads/logo/enviet-logo.png";
+                            }
+
+
+                            // Cập nhật mảng requestTypeImage
+                            if (i >= imageCount)
+                            {
+                                Array.Resize(ref requestTypeImage, i + 1);
+                                requestTypeImage[i] = "/lib/Content/Uploads/logo/enviet-logo.png";
+                            }
+
+                            // Tạo Tên tệp mới
+                            string fileName = Path.GetFileName(feeUniqueFileName);
+                            string filePath = Path.Combine("wwwroot", "lib", "Content", "Uploads", "logo", fileName);
+
+                            // Kiểm tra xem tệp đã tồn tại hay chưa
+                            if (System.IO.File.Exists(filePath))
+                            {
+                                // Nếu tệp đã tồn tại, ghi đè lên tệp cũ
+                                // Đường dẫn của hình ảnh cần được cập nhật
+                                feeUniqueFileName = "/lib/Content/Uploads/logo/" + fileName;
+                            }
+                            else
+                            {
+                                // Nếu tệp không tồn tại, lưu tên tệp mới vào thư mục
+                                System.IO.File.Move(requestTypeImage[i], filePath);
+                                feeUniqueFileName = "/lib/Content/Uploads/logo/" + fileName;
                             }
 
                             PaymentFee fee;
@@ -180,7 +217,7 @@ namespace Appota.Areas.Admin.Controllers
                             fee.FixedCosts = FixedCosts[i];
                             fee.IsActived = true;
                             fee.PaymentName = payment.Name;
-                            fee.Image = feeUniqueFileName[i] != null ? "/lib/Content/Uploads/logo/" + feeUniqueFileName[i] : fee.Image;
+                            fee.Image = feeUniqueFileName;
                         }
                         db.SaveChanges();
                     }

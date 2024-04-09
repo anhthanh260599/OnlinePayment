@@ -59,7 +59,10 @@
                             <td><input name="Percent[]" type="text" class="form-control" placeholder="Nhập chi phí %"></td>
                             <td><input name="RequestType[]" type="text" class="form-control" placeholder="Nhập loại thanh toán (paywithATM/SHB/captureWallet)"></td>
                             <td><input name="FixedCosts[]" type="text" class="form-control" placeholder="Nhập giá cố định"></td>
-                            <td class="custom-file"><input name="requestTypeImage" type="file" class="form-control-file form-control" id="requestTypeImage"></td>
+                            <td class="custom-file">
+                                <input type="file" class="form-control-file requestTypeImageInputFile form-control" id="requestTypeImage">
+                                <input type="text" name="requestTypeImage[]" class="requestTypeImageInputValue" />
+                             </td>
                             <td><button type="button" class="btn btn-danger removeFee">Xóa</button></td>
                         </tr>
                     </tbody>
@@ -89,5 +92,15 @@
         $(document).on('click', '.removeFee', function () {
             $(this).closest('tr').remove();
         });
+
+        $('body').on('change', '.requestTypeImageInputFile', function () {
+            var input = $(this);
+            var fileName = input.val(); // Lấy tên file đã chọn
+            // Loại bỏ phần "C:\fakepath\" từ đường dẫn
+            fileName = fileName.replace(/^.*[\\\/]/, '');
+            // Hiển thị đường dẫn của file trong ô input text
+            input.closest('.feeRow').find('.requestTypeImageInputValue').val("wwwroot/lib/Content/Uploads/logo/" + fileName);
+        });
+
     });
 </script>
