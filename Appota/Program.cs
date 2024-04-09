@@ -3,6 +3,7 @@ using Appota.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
+using Appota.Schedule;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,5 +65,11 @@ app.Run(async context =>
 
     await context.Response.WriteAsync($"Session value: {value}");
 });
+
+// Lập lịch execute stored procedure
+var serviceProvider = builder.Services.BuildServiceProvider();
+var dbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
+var scheduler = new Scheduler(dbContext);
+scheduler.Start();
 
 app.Run();
