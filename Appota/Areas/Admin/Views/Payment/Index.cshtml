@@ -170,7 +170,8 @@
                                             <td> <input name="FixedCosts[]" value="@fee.FixedCosts" type="text" class="form-control" placeholder="Nhập giá cố định" /></td>
                                             <td> <input name="RequestType[]" value="@fee.RequestType" type="text" class="form-control" placeholder="Nhập RequestType/BankCode" /></td>
                                             <td class="custom-file">
-                                                <input name="requestTypeImage" type="file" class="form-control-file form-control" id="requestTypeImage" value="@fee.Image">
+                                                <input type="file" class="form-control-file requestTypeImageInputFile form-control" id="requestTypeImage" value="@fee.Image">
+                                                <input type="text" name="requestTypeImage[]" class="requestTypeImageInputValue" value="@fee.Image" />
                                             </td>
 
                                             <td>
@@ -295,11 +296,20 @@
                 })
             }
         })
+
+        $('body').on('change', '.requestTypeImageInputFile', function () {
+            var input = $(this);
+            var fileName = input.val(); // Lấy tên file đã chọn
+            // Loại bỏ phần "C:\fakepath\" từ đường dẫn
+            fileName = fileName.replace(/^.*[\\\/]/, '');
+            // Hiển thị đường dẫn của file trong ô input text
+            input.closest('.feeRow').find('.requestTypeImageInputValue').val("wwwroot/lib/Content/Uploads/logo/" + fileName);
+        });
+
     });
 
 
     function addField(table) {
-
         var tableRef = document.getElementById(table);
         var newRow = tableRef.insertRow(-1);
 
@@ -352,11 +362,18 @@
 
         newCell = newRow.insertCell(6);
         newElem = document.createElement('input');
-        newElem.setAttribute("class", "form-control-file form-control");
-        newElem.setAttribute("name", "requestTypeImage");
+        newElem.setAttribute("class", "form-control-file form-control requestTypeImageInputFile");
         newElem.setAttribute("id", "requestTypeImage");
+        newElem.setAttribute("value", "");
         newElem.setAttribute("type", "file");
         newCell.appendChild(newElem);
+        newElem = document.createElement('input');
+        newElem.setAttribute("name", "requestTypeImage[]");
+        newElem.setAttribute("class", "requestTypeImageInputValue");
+        newElem.setAttribute("value", ""); 
+        newElem.setAttribute("type", "text");
+        newCell.appendChild(newElem);
+
 
         newCell = newRow.insertCell(7);
         newElem = document.createElement('input');
