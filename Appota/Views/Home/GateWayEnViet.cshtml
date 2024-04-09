@@ -128,8 +128,7 @@
 
                         <div class="row">
                             <div class="col-7">
-                                <span class="text-primary">Tạm thời</span>
-                                <p class="order__title">Tên người dùng</p>
+                                <p class="order__title required-field">Tên người dùng</p>
                             </div>
                             <div class="col-5">
                                 <input type="text" class="float-end form-control" placeholder="Nhập tên" name="userName" />
@@ -238,13 +237,22 @@
                 </div>
 
             </div>
+
             <div class="col-4">
                 <div class="content-box p-4 bg-white">
 
-                    @if (!string.IsNullOrEmpty(ViewBag.VNDtoUSD))
-                    {
-                        <span style="font-size:14px;">Giá USD hôm nay:<span class="text-danger"> @ViewBag.VNDtoUSD </span> </span>
-                    }
+                    <div class="row">
+                        <div class="col-6">
+                            @if (!string.IsNullOrEmpty(ViewBag.VNDtoUSD))
+                            {
+                                <p style="font-size:14px;">Giá USD hôm nay:<span class="text-danger"> @ViewBag.VNDtoUSD </span> </p>
+                            }
+                        </div>
+                        <div class="col-6">
+
+                            <p id="showRates" style="cursor:pointer; font-size:14px; float:right; color:#2aabe2;">Xem tỷ lệ quy đổi ngoại tệ</p>
+                        </div>
+                    </div>
 
 
                     <div class="row">
@@ -284,25 +292,55 @@
                         </div>
                         <div class="col-5">
                             <p class="float-end"><span class="TotalPay">100000</span> đ</p>
-                            <input type="text" hidden class="TotalPayInput" name="TotalPay" value="100000" />
+                            <input type="text" class="TotalPayInput" name="TotalPay" value="100000" />
 
                         </div>
                     </div>
                 </div>
-
-
-                <button type="submit" class="btn btn__xac-nhan p-2 mt-4" style="width: 100%">Xác nhận</button>
+                <button type="submit" class="btn btn__xac-nhan p-2 mt-4" id="btn-submit" style="width: 100%">Xác nhận</button>
             </div>
 
+            <!-- Định nghĩa modal -->
+            <div class="modal fade" id="ratesModal" tabindex="-1" role="dialog" aria-labelledby="ratesModalLabel" aria-hidden="true">
+                <div class="modal-dialog" style="max-width:50%;" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h6 class="modal-title" id="ratesModalLabel">Được cung cấp bởi Vietcombank</h6> <br />
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Định nghĩa div chứa nội dung của PartialView -->
+                            <div id="partialViewContainer"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </form>
 
+@if (TempData["ErrorMessage"] != null)
+{
+    <script type="text/javascript">
+        window.onload = function () {
+            var message = '@Html.Raw(TempData["ErrorMessage"])';
+            Swal.fire({
+                title: "Lỗi!",
+                text: message,
+                icon: "error",
+                button: "OK",
+            });
+        };
+    </script>
+}
 
 <script>
 
     $(document).ready(function () {
 
+        // Check radio
         $('div.list-payment-type-item > div').hide()
         $('.paymentType__header').hide()
 
@@ -313,9 +351,7 @@
             $('div.list-payment-type-item > div[data-id="' + id + '"]').show(); // hiển thị phần tử tương ứng
         });
 
-
         $('input[name="requestType"]').on('click', function () {
-
             // Lấy giá trị %
             var percent = $(this).data('value');
             percent = percent * 100;
@@ -333,8 +369,25 @@
             $('.TotalPayInput').val(totalPay);
         });
 
+        // Mở popup
+        $("#showRates").click(function () {
+            $.get("/Home/Partial_NgoaiTe", function (data) {
+                $("#partialViewContainer").html(data);
+                // Mở modal
+                $("#ratesModal").modal('show');
+            });
+        });
+
+        // Disable button on submit
+        $('form').submit(function () {
+            $('#btn-submit').prop('disabled', true); 
+            $('#btn-submit').prop('cursor', 'no-drop');
+
+        });
+
     });
 
+    // Đếm ngược
     var countDownTime = 5 * 60; // 5 phút
     var hoursBox = document.getElementById('hoursBox');
     var minutesBox = document.getElementById('minutesBox');
@@ -363,6 +416,8 @@
     };
 
 
+
+    // Cắt chuỗi
     var paymentNames = document.getElementsByClassName("payment-name");
     for (var i = 0; i < paymentNames.length; i++) {
         var text = paymentNames[i].innerText;

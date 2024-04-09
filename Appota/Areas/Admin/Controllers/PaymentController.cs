@@ -43,6 +43,7 @@ namespace Appota.Areas.Admin.Controllers
             try
             {
                 model.IsActived = true;
+                string defaultImage = "/lib/Content/Uploads/logo/enviet-logo.png"; 
                 if (imageFile != null && imageFile.Length > 0)
                 {
                     string uploadsFolder = Path.Combine(webHostEnvironment.WebRootPath, "lib", "Content", "Uploads", "logo");
@@ -54,12 +55,16 @@ namespace Appota.Areas.Admin.Controllers
                     }
                     model.Image = "/lib/Content/Uploads/logo/" + uniqueFileName;
                 }
+                else
+                {
+                    model.Image = defaultImage;
+                }
                 db.Payments.Add(model);
-                db.SaveChanges();
 
                 // Xử lý danh sách Phí
-                if (FeeName != null && Percent != null && RequestType != null)
+                if (FeeName.Length > 0 && Percent.Length > 0 && RequestType.Length > 0 && requestTypeImage.Length > 0)
                 {
+
                     for (int i = 0; i < FeeName.Length; i++)
                     {
                         string feeUniqueFileName = "";
@@ -69,6 +74,10 @@ namespace Appota.Areas.Admin.Controllers
                         {
                             // Sử dụng đường dẫn đã được chọn
                             feeUniqueFileName = requestTypeImage[i];
+                        }
+                        else
+                        {
+                            feeUniqueFileName = defaultImage;
                         }
 
                         // Tên tệp mới
@@ -89,6 +98,7 @@ namespace Appota.Areas.Admin.Controllers
                             feeUniqueFileName = "/lib/Content/Uploads/logo/" + fileName;
                         }
 
+                        db.SaveChanges();
                         PaymentFee paymentFee = new PaymentFee
                         {
                             Name = FeeName[i],
@@ -103,14 +113,17 @@ namespace Appota.Areas.Admin.Controllers
                         db.PaymentsFee.Add(paymentFee);
                     }
                 }
-
+                else
+                {
+                    return Json(new { success = false, message = "Vui lòng điền đủ thông tin" });
+                }
                 db.SaveChanges();
 
-                return RedirectToAction("Index");
+                return Json(new {success = true, message = "Thêm mới phương thức thành công"});
             }
             catch (Exception ex)
             {
-                return RedirectToAction("Index");
+                return Json(new { success = false, message = "Vui lòng điền đủ thông tin" });
             }
         }
 
@@ -134,8 +147,9 @@ namespace Appota.Areas.Admin.Controllers
                     }
                     payment.Image = "/lib/Content/Uploads/logo/" + uniqueFileName;
                     db.SaveChanges();
+                    return Json(new { success = true });
                 }
-                return Json(new { success = true });
+                return Json(new { success = false });
 
             }
             catch (Exception ex)

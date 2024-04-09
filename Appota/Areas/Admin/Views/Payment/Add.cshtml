@@ -12,7 +12,7 @@
 <div class="card-body">
 
     <div class="bs-stepper-content">
-        @using (Html.BeginForm("Add", "Payment", FormMethod.Post, new { enctype = "multipart/form-data", }))
+        @using (Html.BeginForm("Add", "Payment", FormMethod.Post, new { enctype = "multipart/form-data", id = "addForm" }))
         {
             @Html.AntiForgeryToken()
             @Html.ValidationSummary(true)
@@ -21,7 +21,7 @@
             <div class="form-group">
                 <h4 class="text-danger">Phương thức thanh toán</h4>
 
-                <label>Tên phương thức</label>
+                <label class="required-field" >Tên phương thức</label>
                 @Html.TextBoxFor(x => x.Name, new { @class = "form-control", @placeholder = "Nhập tên phương thức" })
                 @Html.ValidationMessageFor(x => x.Name, null, new { @class = "text-danger" })
 
@@ -45,10 +45,10 @@
                 <table id="feeTable" class="table mt-4">
                     <thead>
                         <tr>
-                            <th>Thông tin Phí</th>
-                            <th>% Chi phí</th>
-                            <th>Loại thanh toán</th>
-                            <th>Giá cố định</th>
+                            <th class="required-field">Thông tin Phí </th>
+                            <th class="required-field">% Chi phí</th>
+                            <th class="required-field">Giá cố định</th>
+                            <th class="required-field">Loại thanh toán</th>
                             <th>Hình</th>
                             <th></th>
                         </tr>
@@ -56,12 +56,12 @@
                     <tbody>
                         <tr class="feeRow">
                             <td><input name="FeeName[]" type="text" class="form-control" placeholder="Nhập tên phí"></td>
-                            <td><input name="Percent[]" type="text" class="form-control" placeholder="Nhập chi phí %"></td>
+                            <td><input name="Percent[]" type="number" step="any" class="form-control" placeholder="Nhập chi phí %"></td>
+                            <td><input name="FixedCosts[]" type="number" step="any" class="form-control" placeholder="Nhập giá cố định"></td>
                             <td><input name="RequestType[]" type="text" class="form-control" placeholder="Nhập loại thanh toán (paywithATM/SHB/captureWallet)"></td>
-                            <td><input name="FixedCosts[]" type="text" class="form-control" placeholder="Nhập giá cố định"></td>
                             <td class="custom-file">
                                 <input type="file" class="form-control-file requestTypeImageInputFile form-control" id="requestTypeImage">
-                                <input type="text" name="requestTypeImage[]" class="requestTypeImageInputValue" />
+                                <input type="text" hidden name="requestTypeImage[]" class="requestTypeImageInputValue" />
                              </td>
                             <td><button type="button" class="btn btn-danger removeFee">Xóa</button></td>
                         </tr>
@@ -100,6 +100,42 @@
             fileName = fileName.replace(/^.*[\\\/]/, '');
             // Hiển thị đường dẫn của file trong ô input text
             input.closest('.feeRow').find('.requestTypeImageInputValue').val("wwwroot/lib/Content/Uploads/logo/" + fileName);
+        });
+
+
+        $('#addForm').submit(function (e) {
+            e.preventDefault();
+            var formData = new FormData($(this)[0]);
+            $.ajax({
+                url: '/admin/Payment/Add',
+                type: 'POST',
+                data: formData,
+                async: false,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function (data) {
+                    if (data.success) {
+                        Swal.fire({
+                            title: data.message,
+                            icon: "success"
+                        }).then((result) => {
+                            window.location.href = "Index";
+                        })
+                    } else {
+                        Swal.fire({
+                            title: "Lỗi",
+                            text: data.message,
+                            icon: "error"
+                        })
+                       
+                    }
+                },
+                error: function () {
+                    alert('Có lỗi xảy ra khi gửi yêu cầu.');
+                }
+            });
+            return false;
         });
 
     });
