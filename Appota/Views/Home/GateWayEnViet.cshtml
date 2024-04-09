@@ -10,7 +10,7 @@
     }
 
     .content-box {
-        border-radius: 24px;
+        border-radius: 24px;    
     }
 
     .total-price {
@@ -269,7 +269,7 @@
                         </div>
                         <div class="col-5">
                             <p class="float-end"><span class="SubTotal">100000</span> đ</p>
-                            <input type="text" name="Money" hidden value="100000" />
+                            <input type="text" hidden name="Money" class="SubTotalValue" value="100000" />
                         </div>
                     </div>
 
@@ -292,7 +292,7 @@
                         </div>
                         <div class="col-5">
                             <p class="float-end"><span class="TotalPay">100000</span> đ</p>
-                            <input type="text" class="TotalPayInput" name="TotalPay" value="100000" />
+                            <input type="text" hidden class="TotalPayInput" name="TotalPay" value="100000" />
 
                         </div>
                     </div>
@@ -338,7 +338,18 @@
 
 <script>
 
+    // Hàm format số thành dạng xxx,xxx
+    function formatNumber(number) {
+        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+
     $(document).ready(function () {
+
+        // $('.SubTotal').text(formatNumber($('.SubTotal').text()));
+        $('.FeeDependOnSth').text(formatNumber($('.FeeDependOnSth').text()));
+        $('.SubTotal').text(formatNumber(parseFloat($('.SubTotal').text())));
+        $('.TotalPay').text(formatNumber(parseFloat($('.TotalPay').text())));
 
         // Check radio
         $('div.list-payment-type-item > div').hide()
@@ -357,17 +368,24 @@
             percent = percent * 100;
             $('p[data-id="requestType"]').text('Phí (' + percent + ' %)');
 
+
             // Tính tiền tạm tính
-            var subtotal = parseFloat($('.SubTotal').text());
+            var subtotal = $('.SubTotalValue').val();
             var fee = subtotal * percent / 100;
-            $('.FeeDependOnSth').text(fee.toFixed(0));
+
+            // Format và cập nhật số tiền phí
+            $('.FeeDependOnSth').text(formatNumber(fee));
+
 
             //Tính tổng tiền
-            var totalPay = parseFloat($('.TotalPay').text());
-            totalPay = fee + subtotal;
-            $('.TotalPay').text(totalPay.toFixed(0));
+            var totalPay = parseFloat(subtotal) + fee; 
+
+
+            // Format và cập nhật tổng số tiền
+            $('.TotalPay').text(formatNumber(totalPay));
             $('.TotalPayInput').val(totalPay);
         });
+
 
         // Mở popup
         $("#showRates").click(function () {
@@ -426,6 +444,8 @@
             paymentNames[i].innerText = newText
         }
     }
+
+   
 
 
 </script>
