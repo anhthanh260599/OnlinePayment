@@ -111,7 +111,7 @@
                             <img style="width:40%; margin: 8px;border-radius:8px; border:solid 1px #dbdbdb" src="@item.Image" />
                         </div>
                         <div class="col-md-8">
-                            @using (Html.BeginForm("ChangePaymentImage", "Payment", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                            @using (Html.BeginForm("ChangePaymentImage", "Payment", FormMethod.Post, new { enctype = "multipart/form-data", id = "paymentForm" }))
                             {
                                 <div class="row">
                                     <div class="col-8">
@@ -175,7 +175,10 @@
                                             </td>
 
                                             <td>
-                                                <a href="#" class="btnDeleteFee btn btn-sm btn-danger" data-id="@fee.Id"><i class="fa-regular fa-trash-can"></i></a>
+                                                @if (item.PaymentFees.IndexOf(fee) != 0)
+                                                {
+                                                    <a href="#" class="btnDeleteFee btn btn-sm btn-danger" data-id="@fee.Id"><i class="fa-regular fa-trash-can"></i></a>
+                                                }
                                                 <input type="text" name="PaymentID" value="@fee.PaymentId" hidden />
                                                 <input type="text" name="PaymentFeeId" value="@fee.Id" hidden />
                                             </td>
@@ -184,7 +187,7 @@
                                     }
                                 </tbody>
                             </table>
-                            <input type="button" class="button-add-line btn btn-primary addFee" id="addFee" data-tableid="@item.Id" value="Thêm phí" @* onclick="addField('feeTable@(item.Id)');" *@ />
+                            <input type="button" class="button-add-line btn btn-primary addFee" id="addFee" data-tableid="@item.Id" value="Thêm phí" />
                             <button type="submit" id="submitForm" class="btn btn-success">Lưu</button>
                         }
 
@@ -211,88 +214,6 @@
 </div>
 
 <script>
-
-
-    // function addField(table) {
-    //     var tableRef = document.getElementById(table);
-    //     var newRow = tableRef.insertRow(-1);
-
-    //     var newCell = newRow.insertCell(0);
-    //     var newElem = document.createElement('label');
-    //     newElem.setAttribute("class", "switch");
-
-    //     newCell.appendChild(newElem);
-
-    //     newCell = newRow.insertCell(1);
-    //     newElem = document.createElement('img');
-    //     newElem.setAttribute("style", "width:40px;height:40px;");
-    //     newElem.setAttribute("src", "/lib/Content/logo/payment-logo/enviet-logo.png");
-
-    //     newCell.appendChild(newElem);
-
-    //     newCell = newRow.insertCell(2);
-    //     newElem = document.createElement('input');
-    //     newElem.setAttribute("class", "form-control");
-    //     newElem.setAttribute("name", "FeeName[]");
-    //     newElem.setAttribute("place-holder", "Nhập tên phí");
-    //     newElem.setAttribute("type", "text");
-    //     newCell.appendChild(newElem);
-
-    //     newCell = newRow.insertCell(3);
-    //     newElem = document.createElement('input');
-    //     newElem.setAttribute("class", "form-control");
-    //     newElem.setAttribute("name", "Percent[]");
-    //     newElem.setAttribute("place-holder", "Nhập tỷ lệ phần trăm");
-    //     newElem.setAttribute("type", "text");
-    //     newCell.appendChild(newElem);
-
-
-    //     newCell = newRow.insertCell(4);
-    //     newElem = document.createElement('input');
-    //     newElem.setAttribute("class", "form-control");
-    //     newElem.setAttribute("name", "FixedCosts[]");
-    //     newElem.setAttribute("place-holder", "Nhập Giá cố định");
-    //     newElem.setAttribute("type", "text");
-    //     newCell.appendChild(newElem);
-
-
-    //     newCell = newRow.insertCell(5);
-    //     newElem = document.createElement('input');
-    //     newElem.setAttribute("class", "form-control");
-    //     newElem.setAttribute("name", "RequestType[]");
-    //     newElem.setAttribute("place-holder", "Nhập RequestType/BankCode");
-    //     newElem.setAttribute("type", "text");
-    //     newCell.appendChild(newElem);
-
-    //     newCell = newRow.insertCell(6);
-    //     newElem = document.createElement('input');
-    //     newElem.setAttribute("class", "form-control-file form-control requestTypeImageInputFile");
-    //     newElem.setAttribute("id", "requestTypeImage");
-    //     newElem.setAttribute("value", "");
-    //     newElem.setAttribute("type", "file");
-    //     newCell.appendChild(newElem);
-    //     newElem = document.createElement('input');
-    //     newElem.setAttribute("name", "requestTypeImage[]");
-    //     newElem.setAttribute("class", "requestTypeImageInputValue");
-    //     // newElem.setAttribute("value", "Đang cập nhật");
-    //     // newElem.setAttribute("disabled", "disabled");
-    //     newElem.setAttribute("type", "text");
-    //     newCell.appendChild(newElem);
-
-
-    //     newCell = newRow.insertCell(7);
-    //     newElem = document.createElement('input');
-    //     newElem.setAttribute("type", "button");
-    //     newElem.setAttribute("class", "btn btn-sm btn-danger");
-    //     newElem.setAttribute("value", "Xoá dòng vừa thêm");
-    //     newElem.setAttribute("onclick", 'SomeDeleteRowFunction(this)')
-    //     newCell.appendChild(newElem);
-    // }
-
-    // window.SomeDeleteRowFunction = function SomeDeleteRowFunction(o) {
-    //     var p = o.parentNode.parentNode;
-    //     p.parentNode.removeChild(p);
-    // }
 
     $(document).ready(function () {
         $('body').on('change', '.btnActive', function () {
@@ -347,38 +268,59 @@
                 processData: false,
                 contentType: false,
                 success: function (result) {
-                    if (success) {
+                    if (result.success) {
                         location.reload();
                         alert("Đổi ảnh thành công");
                     }
-                    else {
-                        alert("Đổi ảnh thất bại, có lỗi xảy ra");
-                    }
                 },
-                error: function (xhr, status, error) {
-                    alert("Đổi ảnh thất bại, có lỗi xảy ra");
-
-                }
             });
         });
 
 
+        // $('body').on('click', '.btnDeleteFee', function () {
+        //     var id = $(this).data("id");
+        //     var confirmMessage = confirm("Bạn có thực sự muốn xoá?");
+        //     if (confirmMessage === true) {
+        //         $.ajax({
+        //             url: '/admin/Payment/DeleteFee',
+        //             type: 'POST',
+        //             data: { id: id },
+        //             success: function (result) {
+        //                 if (result.success) {
+        //                     location.reload()
+        //                 }
+        //             }
+        //         })
+        //     }
+        // });
+
         $('body').on('click', '.btnDeleteFee', function () {
             var id = $(this).data("id");
-            var confirmMessage = confirm("Bạn có thực sự muốn xoá?");
-            if (confirmMessage === true) {
-                $.ajax({
-                    url: '/admin/Payment/DeleteFee',
-                    type: 'POST',
-                    data: { id: id },
-                    success: function (result) {
-                        if (result.success) {
-                            location.reload()
+            Swal.fire({
+                title: 'Bạn có thực sự muốn xoá?',
+                text:'Bạn sẽ không thể khôi phục sau khi xoá',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Xoá',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/admin/Payment/DeleteFee',
+                        type: 'POST',
+                        data: { id: id },
+                        success: function (result) {
+                            if (result.success) {
+                                location.reload();
+                            }
                         }
-                    }
-                })
-            }
+                    });
+                }
+            });
         });
+
 
         // Xử lý sự kiện click cho các nút "Thêm phí" chung
         $(".addFee").click(function () {
@@ -408,6 +350,37 @@
             fileName = fileName.replace(/^.*[\\\/]/, '');
             // Hiển thị đường dẫn của file trong ô input text
             input.closest('.feeRow').find('.requestTypeImageInputValue').val("wwwroot/lib/Content/Uploads/logo/" + fileName);
+        });
+
+
+        $('#paymentForm').submit(function (e) {
+            e.preventDefault();
+            var formData = new FormData($(this)[0]);
+            $.ajax({
+                url: '/admin/Payment/ChangePaymentImage',
+                type: 'POST',
+                data: formData,
+                async: false,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function (data) {
+                    if (data.success) {
+                        Swal.fire({
+                            title: "Cập nhật thành công",
+                            icon: "success"
+                        }).then((result) => {
+                            location.reload();
+                        })
+                    } else {
+                        alert('Có lỗi xảy ra khi cập nhật hình ảnh.');
+                    }
+                },
+                error: function () {
+                    alert('Có lỗi xảy ra khi gửi yêu cầu.');
+                }
+            });
+            return false;
         });
 
     });

@@ -33,7 +33,6 @@ namespace Appota.Controllers
         private readonly IConfiguration _configuration;
         public List<UsersPay> users = new List<UsersPay>();
         public UsersPay user = new UsersPay();
-        bool isInitialized = false;
         public ApplicationDbContext db;
         public static double VNDtoUSD;
 
@@ -42,7 +41,6 @@ namespace Appota.Controllers
             _logger = logger;
             _configuration = configuration;
             this.db = db;
-            Initialize();
         }
 
         public async Task<IActionResult> GateWayEnViet()
@@ -76,11 +74,36 @@ namespace Appota.Controllers
             return View(items);
         }
 
-        private async Task Initialize()
+        public async Task<IActionResult> Partial_NgoaiTe()
         {
-            db.Database.ExecuteSqlRaw("EXEC UpdateStatusIfNoChange");
-            isInitialized = true;
+            var url = "https://justcors.com/l_d26ou2gp0k/https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx?b=10";
+            var httpClient = new HttpClient();
+            var xml = await httpClient.GetStringAsync(url);
+            var xdoc = XDocument.Parse(xml);
+
+            var errorMessage = TempData["ErrorMessage"];
+
+            var exrates = xdoc.Descendants("Exrate")
+                .Select(x => new Rates
+                {
+                    CurrencyCode = (string)x.Attribute("CurrencyCode"),
+                    CurrencyName = (string)x.Attribute("CurrencyName"),
+                    Buy = (string)x.Attribute("Buy"),
+                    Transfer = (string)x.Attribute("Transfer"),
+                    Sell = (string)x.Attribute("Sell")
+                })
+                .ToList();
+
+            var usdTransferRate = exrates.FirstOrDefault(rate => rate.CurrencyCode == "USD")?.Transfer;
+            if (!string.IsNullOrEmpty(usdTransferRate))
+            {
+                // Loại bỏ dấu phẩy và chuyển đổi thành kiểu int
+                VNDtoUSD = double.Parse(usdTransferRate.Replace(",", ""));
+                ViewBag.VNDtoUSD = VNDtoUSD;
+            }
+            return PartialView(exrates);
         }
+
         public IActionResult Index()
         {
             return View();
@@ -113,7 +136,6 @@ namespace Appota.Controllers
                 VNDtoUSD = double.Parse(usdTransferRate.Replace(",", ""));
                 ViewBag.VNDtoUSD = VNDtoUSD;
             }
-
             return View(exrates);
         }
         private static Random random = new Random();
@@ -385,18 +407,6 @@ namespace Appota.Controllers
 
         }
 
-        public ActionResult AppotaQRPay()
-        {
-            var qrCode = TempData["QRCode"] as string;
-            var qrTime = TempData["QRTime"] as string;
-            var amountString = TempData["Amount"] as string;
-
-            var amount = int.Parse(amountString);
-
-            var orderId = TempData["orderId"] as string;
-            return View();
-        }
-
         public ActionResult GetListUser()
         {
             var items = db.UsersPays.OrderByDescending(x=>x.Id).ToList();
@@ -414,6 +424,19 @@ namespace Appota.Controllers
 
             if (paymentType == "Appota")
             {
+                var PaymentActive = db.Payments.Where(x => x.Name == paymentType && x.IsActived == false).FirstOrDefault();
+                if (PaymentActive != null)
+                {
+                    TempData["ErrorMessage"] = "Phương thức thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
+                    return RedirectToAction("GateWayEnViet", "Home");
+                }
+                var requestTypeActive = db.PaymentsFee.Where(x => x.RequestType == requestType && x.IsActived == false).FirstOrDefault();
+                if (requestTypeActive != null)
+                {
+
+                    TempData["ErrorMessage"] = "Loại thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
+                    return RedirectToAction("GateWayEnViet", "Home");
+                }
                 var paymentApiConfig = _configuration.GetSection("PaymentApi");
                 var SecretKey = paymentApiConfig["SecretKey"];
                 var bankCode = "";
@@ -530,14 +553,14 @@ namespace Appota.Controllers
                             }
                             else
                             {
-                                ViewBag.thongbao = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
+                                TempData["ErrorMessage"] = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
                                 return RedirectToAction("GateWayEnViet","Home");
                             }
 
                         }
                         catch (Exception ex)
                         {
-                            ViewBag.thongbao = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
+                            TempData["ErrorMessage"] = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
                             return RedirectToAction("GateWayEnViet", "Home");
                         }
                     }
@@ -545,6 +568,21 @@ namespace Appota.Controllers
             }
             else if (paymentType == "Momo")
             {
+                var PaymentActive = db.Payments.Where(x => x.Name == paymentType && x.IsActived == false).FirstOrDefault();
+                if (PaymentActive != null)
+                {
+                    TempData["ErrorMessage"] = "Phương thức thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
+                    return RedirectToAction("GateWayEnViet", "Home");
+                }
+                var requestTypeActive = db.PaymentsFee.Where(x => x.RequestType == requestType && x.IsActived == false).FirstOrDefault();
+                if (requestTypeActive != null)
+                {
+
+                    TempData["ErrorMessage"] = "Loại thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
+                    return RedirectToAction("GateWayEnViet", "Home");
+                }
+
+
                 var Momo = _configuration.GetSection("Momo");
                 var apiUrl = Momo["ApiUrl"];
                 var PartnerCode = Momo["PartnerCode"];
@@ -616,14 +654,14 @@ namespace Appota.Controllers
                         }
                         else
                         {
-                            ViewBag.thongbao = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
+                            TempData["ErrorMessage"] = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
                             return RedirectToAction("GateWayEnViet", "Home");
                         }
 
                     }
                     catch (Exception ex)
                     {
-                        ViewBag.thongbao = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
+                        TempData["ErrorMessage"] = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
                         return RedirectToAction("GateWayEnViet", "Home");
                     }
                 }
@@ -633,6 +671,19 @@ namespace Appota.Controllers
             {
                 if (requestType != null)
                 {
+                    var PaymentActive = db.Payments.Where(x => x.Name == paymentType && x.IsActived == false).FirstOrDefault();
+                    if (PaymentActive != null)
+                    {
+                        TempData["ErrorMessage"] = "Phương thức thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
+                        return RedirectToAction("GateWayEnViet", "Home");
+                    }
+                    var requestTypeActive = db.PaymentsFee.Where(x=>x.RequestType == requestType && x.IsActived == false).FirstOrDefault();
+                    if (requestTypeActive != null)
+                    {
+
+                        TempData["ErrorMessage"] = "Loại thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
+                        return RedirectToAction("GateWayEnViet", "Home");
+                    }
                     var orderId = RandomString(10);
                     user.Name = userName;
                     user.PaymentType = paymentType;
@@ -649,12 +700,12 @@ namespace Appota.Controllers
                     TempData["orderId"] = orderId;
                     TempData["TotalPay"] = USD.ToString();
                     return RedirectToAction("PaymentWithPaypal", "Home");
-
                 }
 
+                TempData["ErrorMessage"] = "Vui lòng chọn loại thanh toán";
                 return RedirectToAction("GateWayEnViet", "Home");
             }
-            
+
             else
             {
                 TempData["ErrorMessage"] = "Vui lòng chọn phương thức thanh toán";
@@ -665,166 +716,6 @@ namespace Appota.Controllers
             return RedirectToAction("GateWayEnViet", "Home");
         }
 
-        public async Task<IActionResult> KetQuaThanhToanMomo()
-        {
-            var paymentType = TempData["paymentType"] as string;
-            if (paymentType == "Momo")
-            {
-                var Momo = _configuration.GetSection("Momo");
-                var apiUrl = Momo["QueryApi"];
-                var partnerCode = TempData["partnerCode"] as string;
-                var requestId = TempData["requestId"] as string;
-                var orderId = TempData["orderId"] as string;
-                var orderInfo = TempData["orderInfo"] as string;
-                var lang = "vi";
-                var ApiKey = TempData["ApiKey"] as string;
-                var SecretKey = TempData["SecretKey"] as string;
-
-
-                var signatureData = $"accessKey={ApiKey}&orderId={orderId}&partnerCode={partnerCode}&requestId={requestId}";
-                var signature = GenerateSignature(signatureData, SecretKey);
-
-                var data = new
-                {
-                    partnerCode = partnerCode,
-                    requestId = requestId,
-                    orderId = orderId,
-                    signature = signature,
-                    lang = lang
-                };
-
-                using (var client = new HttpClient())
-                {
-                    try
-                    {
-                        var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-                        var response = await client.PostAsync(apiUrl, content);
-
-                        if (response.IsSuccessStatusCode)
-                        {
-                            var responseContent = await response.Content.ReadAsStringAsync();
-
-                            JObject jmessage = JObject.Parse(responseContent);
-                            var resultCode = int.Parse(jmessage.GetValue("resultCode").ToString());
-                            var orderIdResponse = jmessage.GetValue("orderId").ToString();
-
-                            var user = db.UsersPays.Where(x => x.OrderId == orderIdResponse).FirstOrDefault();
-                            string resultMessage = "";
-                            if (user != null)
-                            {
-                                switch (resultCode)
-                                {
-                                    case 1000:
-                                        resultMessage = "Giao dịch đã được khởi tạo, chờ người dùng xác nhận thanh toán.";
-                                        break;
-                                    case 1001:
-                                        resultMessage = "Giao dịch thanh toán thất bại do tài khoản người dùng không đủ tiền";
-                                        break;
-                                    case 1002:
-                                        resultMessage = "Giao dịch bị từ chối do nhà phát hành tài khoản thanh toán";
-                                        break;
-                                    case 1003:
-                                        resultMessage = "Giao dịch bị đã bị hủy.";
-                                        break;
-                                    case 1004:
-                                        resultMessage = "Giao dịch thất bại do số tiền thanh toán vượt quá hạn mức thanh toán của người dùng.";
-                                        break;
-                                    case 1005:
-                                        resultMessage = "Giao dịch thất bại do url hoặc QR code đã hết hạn";
-                                        break;
-                                    case 1006:
-                                        resultMessage = "Giao dịch thất bại do người dùng đã từ chối xác nhận thanh toán.";
-                                        break;
-                                    case 1007:
-                                        resultMessage = "Giao dịch bị từ chối vì tài khoản không tồn tại hoặc đang ở trạng thái ngưng hoạt động";
-                                        break;
-                                    case 4001:
-                                        resultMessage = "Giao dịch bị hạn chế do người dùng chưa hoàn tất xác thực tài khoản.";
-                                        break;
-                                    case 4100:
-                                        resultMessage = "Giao dịch thất bại do người dùng không đăng nhập thành công.";
-                                        break;
-                                    case 9000:
-                                        resultMessage = "Giao dịch thất bại do người dùng không đăng nhập thành công.";
-                                        break;
-                                    default:
-                                        resultMessage = "Giao dịch đang xử lý";
-                                        break;
-                                }
-                                db.Attach(user);
-                                user.PaymentStatus = resultMessage;
-                                user.ResultCode = resultCode;
-                                db.Entry(user).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                                db.SaveChanges();
-                            }
-                            return View(user);
-                        }
-                        else
-                        {
-                            ViewBag.thongbao = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
-                            return View();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        ViewBag.thongbao = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
-                        return View();
-                    }
-                }
-            }
-          
-            return View();
-        }
-
-        public async Task<IActionResult> KetQuaThanhToanAppota()
-        {
-
-            string url = Request.GetDisplayUrl();
-
-            // Phân tích tham số từ URL
-            var queryString = new Uri(url).Query;
-            var queryParameters = HttpUtility.ParseQueryString(queryString);
-
-            // Lấy các giá trị từ các tham số
-            string partnerCode = queryParameters["partnerCode"];
-            string apiKey = queryParameters["apiKey"];
-            string amountString = queryParameters["amount"];
-            long amount = int.Parse(amountString);
-            string currency = queryParameters["currency"];
-            string orderId = queryParameters["orderId"];
-            string appotapayTransId = queryParameters["appotapayTransId"];
-            string bankCode = queryParameters["bankCode"];
-            string errorCode = queryParameters["errorCode"];
-            string extraData = queryParameters["extraData"];
-            string message = queryParameters["message"];
-            string paymentMethod = queryParameters["paymentMethod"];
-            string paymentType = queryParameters["paymentType"];
-            string transactionTs = queryParameters["transactionTs"];
-
-            string errorCodeString = queryParameters["errorCode"] as string;
-            int resultCode = int.Parse(errorCodeString);
-            string resultMessage = "";
-            if (resultCode == 0)
-            {
-                resultMessage = "Thanh toán thành công";
-            }
-            else
-            {
-                resultMessage = "Thanh toán thất bại, Mã lỗi: " + resultCode;
-            }
-
-            var user = db.UsersPays.Where(x => x.OrderId == orderId).FirstOrDefault();
-            if (user != null)
-            {
-                db.Attach(user);
-                user.Amount = amount;
-                user.ResultCode = resultCode;
-                user.PaymentStatus = resultMessage;
-                db.Entry(user).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                db.SaveChanges();
-            }
-            return View(user);
-        }
         private string GenerateJwtToken(string partnerCode, string ApiKey, string SecretKey)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
