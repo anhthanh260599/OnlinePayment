@@ -2,7 +2,6 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Reddit+Mono:wght@200..900&display=swap" rel="stylesheet">
 
 <style>
     body {
@@ -19,7 +18,6 @@
     }
 
     .order__title {
-        font-family: "Reddit Mono", monospace;
         font-size: 16px;
     }
 
@@ -38,6 +36,8 @@
             cursor: pointer;
             display: flex;
             align-items: center;
+            justify-content: center; /* Để hình ảnh nằm giữa */
+
             padding: 12px 5px;
             border: 1px solid #dbdbdb; /* CSS mặc định */
             transition: border-color 0.3s ease;
@@ -53,15 +53,27 @@
             border: 1px solid #f5821f;
         }
 
+        .radio-button input[type="radio"] + label {
+            background-color: #FFFFFF;
+        }
+
         .radio-button img {
             width: 40px; /* CSS hình của radio */
             height: 40px;
             margin-right: 10px;
         }
 
+
+
+
+    .OrderCode {
+        color: #f5821f;
+    }
+
     .btn__xac-nhan {
         background-color: #f5821f; /* CSS nút Submit*/
         color: white;
+        border-radius: 8px;
     }
 
     .btn__xac-nhan:hover {
@@ -99,6 +111,46 @@
         text-align: center;
     }
 
+    .currencyExchangeTitle {
+        font-size: 14px;
+    }
+
+    .SeeCurrencyExchange {
+        cursor: pointer;
+        font-size: 14px;
+        float: right;
+        color: #2aabe2;
+    }
+
+    .modal-dialog {
+        max-width: 50%;
+    }
+
+    /* CSS cho hình ảnh khi màn hình nhỏ */
+    @@media only screen and (max-width: 767px) {
+        .radio-button img {
+            margin-right: 0; /* Loại bỏ margin phải */
+        }
+
+        .currencyExchangeTitle, .SeeCurrencyExchange {
+            font-size: 12px;
+        }
+
+        .total-price {
+            font-size: 14px;
+        }
+
+
+        .modal-dialog {
+            max-width: 80%;
+            margin: 1rem auto;
+        }
+
+        .modal-header {
+            padding: 1rem; 
+        }
+       
+    }
 
 </style>
 
@@ -115,7 +167,7 @@
 <form asp-action="SubmitThanhToan" method="post">
     <div class="container">
         <div class="row">
-            <div class="col-8">
+            <div class="col-md-8 col-sm-12">
 
                 <div class="content-box p-4 bg-white">
 
@@ -126,25 +178,26 @@
                             </div>
                         </div>
 
-                        <div class="row">
+                        <div class="row mb-2">
                             <div class="col-7">
-                                <p class="order__title required-field">Tên người dùng</p>
+                                @* <p class="order__title required-field">Tên người dùng</p> *@
+                                <label class="order__title required-field" style="margin: 6px 0">Tên người dùng</label>
                             </div>
                             <div class="col-5">
                                 <input type="text" class="float-end form-control" placeholder="Nhập tên" name="userName" />
                             </div>
                         </div>
 
-                        <div class="row">
+                        <div class="row mb-2">
                             <div class="col-7">
-                                <p class="order__title">Mã sản phẩm</p>
+                                <p class="order__title">Mã đơn hàng</p>
                             </div>
                             <div class="col-5">
-                                <p class="float-end"><span>EV00001</span></p>
+                                <p class="float-end"><span class="OrderCode">EV00001</span></p>
                             </div>
                         </div>
 
-                        <div class="row">
+                        <div class="row mb-2">
                             <div class="col-7">
                                 <p class="order__title">Nhà cung cấp</p>
                             </div>
@@ -152,9 +205,9 @@
                                 <p class="float-end"><span>Én Việt</span></p>
                             </div>
                         </div>
-                        <div class="row">
+                        <div class="row mb-2">
                             <div class="col-7">
-                                <p class="order__title">Tên sản phẩm</p>
+                                <p class="order__title">Sản phẩm</p>
                             </div>
                             <div class="col-5">
                                 <p class="float-end"><span>Yến Sào</span></p>
@@ -183,7 +236,7 @@
                                             <input type="radio" id="@item.Name" data-id="@item.Id" value="@item.Name" name="paymentType" />
                                             <label style="width:100%" for="@item.Name">
                                                 <img src="@item.Image" alt="@item.Name" />
-                                                <span class="payment-name">Thanh toán qua @item.Name </span>
+                                                <span class="payment-name d-none d-md-inline">Thanh toán qua @item.Name </span>
                                             </label>
                                         </div>
                                     </div>
@@ -220,11 +273,10 @@
                                                     <input type="radio" id="@request.RequestType" data-id="requestType" value="@request.RequestType" data-value="@request.Percent" name="requestType" />
                                                     <label style="width:100%" for="@request.RequestType">
                                                         <img src="@request.Image" alt="@request.RequestType" />
-                                                        <span class="payment-name">Thanh toán qua @request.Name</span>
+                                                        <span class="payment-name d-none d-md-inline">Thanh toán qua @request.Name</span>
                                                     </label>
                                                 </div>
                                             </div>
-
                                         }
                                     }
                                 }
@@ -238,24 +290,24 @@
 
             </div>
 
-            <div class="col-4">
+            <div class="col-md-4 col-sm-12">
                 <div class="content-box p-4 bg-white">
 
-                    <div class="row">
+                    <div class="row mb-2">
                         <div class="col-6">
                             @if (!string.IsNullOrEmpty(ViewBag.VNDtoUSD))
                             {
-                                <p style="font-size:14px;">Giá USD hôm nay:<span class="text-danger"> @ViewBag.VNDtoUSD </span> </p>
+                                <p class="currencyExchangeTitle">Giá USD hôm nay:<span class="text-danger"> @ViewBag.VNDtoUSD </span> </p>
                             }
                         </div>
                         <div class="col-6">
 
-                            <p id="showRates" style="cursor:pointer; font-size:14px; float:right; color:#2aabe2;">Xem tỷ lệ quy đổi ngoại tệ</p>
+                            <p id="showRates" class="SeeCurrencyExchange">Xem tỷ lệ quy đổi ngoại tệ</p>
                         </div>
                     </div>
 
 
-                    <div class="row">
+                    <div class="row mb-2">
                         <div class="col-12">
                             <h5>Số tiền thanh toán</h5>
                         </div>
@@ -263,7 +315,7 @@
 
 
 
-                    <div class="row">
+                    <div class="row mb-2">
                         <div class="col-7">
                             <p class="order__title">Tạm tính</p>
                         </div>
@@ -274,7 +326,7 @@
                     </div>
 
 
-                    <div class="row">
+                    <div class="row mb-2">
                         <div class="col-7">
                             <p data-id="requestType" class="order__title">Phí (0)</p>
                         </div>
@@ -286,7 +338,7 @@
 
 
                     <hr />
-                    <div class="row">
+                    <div class="row mb-2">
                         <div class="col-7">
                             <p class="total-price">TỔNG PHÍ THANH TOÁN</p>
                         </div>
@@ -302,7 +354,7 @@
 
             <!-- Định nghĩa modal -->
             <div class="modal fade" id="ratesModal" tabindex="-1" role="dialog" aria-labelledby="ratesModalLabel" aria-hidden="true">
-                <div class="modal-dialog" style="max-width:50%;" role="document">
+                <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h6 class="modal-title" id="ratesModalLabel">Được cung cấp bởi Vietcombank</h6> <br />
@@ -365,7 +417,7 @@
         $('input[name="requestType"]').on('click', function () {
             // Lấy giá trị %
             var percent = $(this).data('value');
-            percent = percent * 100;
+            percent = percent;
             $('p[data-id="requestType"]').text('Phí (' + percent + ' %)');
 
 

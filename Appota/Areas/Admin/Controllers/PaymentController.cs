@@ -62,7 +62,7 @@ namespace Appota.Areas.Admin.Controllers
                 db.Payments.Add(model);
 
                 // Xử lý danh sách Phí
-                if (FeeName.Length > 0 && Percent.Length > 0 && RequestType.Length > 0 && requestTypeImage.Length > 0)
+                if (FeeName.Length > 0 && FeeName.Any(x => x != null) && FixedCosts.Length > 0 && FixedCosts.Any(x => x >= 0) && Percent.Length > 0 && Percent.Any(x => x != 0) && RequestType.Length > 0 && RequestType.Any(x => x != null) && requestTypeImage.Length > 0)
                 {
 
                     for (int i = 0; i < FeeName.Length; i++)
@@ -97,7 +97,6 @@ namespace Appota.Areas.Admin.Controllers
                             System.IO.File.Move(requestTypeImage[i], filePath);
                             feeUniqueFileName = "/lib/Content/Uploads/logo/" + fileName;
                         }
-
                         db.SaveChanges();
                         PaymentFee paymentFee = new PaymentFee
                         {
@@ -237,10 +236,12 @@ namespace Appota.Areas.Admin.Controllers
                     }
 
                 }
+                TempData["SuccessMessage"] = "Thêm thành công";
                 return RedirectToAction("Index");
             }
             catch (Exception e)
             {
+                TempData["ErrorMessage"] = "Vui lòng điền đủ thông tin";
                 return RedirectToAction("Index");
             }
         }

@@ -213,6 +213,36 @@
     }
 </div>
 
+@if (TempData["ErrorMessage"] != null)
+{
+    <script type="text/javascript">
+        window.onload = function () {
+            var message = '@Html.Raw(TempData["ErrorMessage"])';
+            Swal.fire({
+                title: "Lỗi!",
+                text: message,
+                icon: "error",
+                button: "OK",
+            });
+        };
+    </script>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <script type="text/javascript">
+        window.onload = function () {
+            var message = '@Html.Raw(TempData["SuccessMessage"])';
+            Swal.fire({
+                title: "Thành công!",
+                text: message,
+                icon: "success",
+                button: "OK",
+            });
+        };
+    </script>
+}
+
 <script>
 
     $(document).ready(function () {
