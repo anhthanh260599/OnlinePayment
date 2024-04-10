@@ -1,4 +1,5 @@
 ﻿@model List<Payment>
+@using Appota.Common;
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -7,6 +8,17 @@
     body {
         background-color: #f4f6f8;
     }
+
+    section {
+        background-color: white;
+        border-radius: 24px;
+        border: solid 1px #dbdbdb;
+        padding: 24px;
+    }
+
+    section:not(:first-child) {
+            margin: 16px 0;
+        }
 
     .content-box {
         border-radius: 24px;    
@@ -126,6 +138,20 @@
         max-width: 50%;
     }
 
+    .container {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .order-section,
+    .contact-section,
+    .payment-section,
+    .payment-type-section,
+    .payment-info-section {
+        width: 100%;
+        margin-bottom: 16px;
+    }
+
     /* CSS cho hình ảnh khi màn hình nhỏ */
     @@media only screen and (max-width: 767px) {
         .radio-button img {
@@ -149,7 +175,6 @@
         .modal-header {
             padding: 1rem; 
         }
-       
     }
 
 </style>
@@ -169,9 +194,9 @@
         <div class="row">
             <div class="col-md-8 col-sm-12">
 
-                <div class="content-box p-4 bg-white">
+                <div class="content-box">
 
-                    <section>
+                    <section class="order-section order-1">
                         <div class="row">
                             <div class="col-12">
                                 <h5 class="order__header">Thông tin đơn hàng</h5>
@@ -179,45 +204,65 @@
                         </div>
 
                         <div class="row mb-2">
-                            <div class="col-7">
-                                @* <p class="order__title required-field">Tên người dùng</p> *@
-                                <label class="order__title required-field" style="margin: 6px 0">Tên người dùng</label>
-                            </div>
                             <div class="col-5">
-                                <input type="text" class="float-end form-control" placeholder="Nhập tên" name="userName" />
-                            </div>
-                        </div>
-
-                        <div class="row mb-2">
-                            <div class="col-7">
                                 <p class="order__title">Mã đơn hàng</p>
                             </div>
-                            <div class="col-5">
+                            <div class="col-7">
                                 <p class="float-end"><span class="OrderCode">EV00001</span></p>
                             </div>
                         </div>
 
                         <div class="row mb-2">
-                            <div class="col-7">
-                                <p class="order__title">Nhà cung cấp</p>
-                            </div>
                             <div class="col-5">
-                                <p class="float-end"><span>Én Việt</span></p>
+                                <p class="order__title">Ghi chú</p>
+                            </div>
+                            <div class="col-7">
+                                <p class="float-end">Đây là ghi chú cho đơn hàng....</p>
                             </div>
                         </div>
+                       
                         <div class="row mb-2">
-                            <div class="col-7">
+                            <div class="col-12">
                                 <p class="order__title">Sản phẩm</p>
                             </div>
-                            <div class="col-5">
-                                <p class="float-end"><span>Yến Sào</span></p>
-                            </div>
                         </div>
+
+                        <table class="table table-responsive-sm">
+                            <thead>
+                                <tr>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Số lượng</th>
+                                    <th>Đơn giá (VNĐ)</th>
+                                    <th>Thành tiền (VNĐ) </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Yến Sào</td>
+                                    <td>1</td>
+                                    <td>@Common.FormatNumber(50000,0)</td>
+                                    <td>@Common.FormatNumber(50000, 0)</td>
+                                </tr>
+                                <tr>
+                                    <td>Tour</td>
+                                    <td>2</td>
+                                    <td>@Common.FormatNumber(50000, 0)</td>
+                                    <td>@Common.FormatNumber(100000, 0)</td>
+                                </tr>
+
+                               @*  Tổng tiền *@
+
+                               <tr>
+                                    <td colspan="3"> <strong>Tổng tiền</strong> </td>
+                                   <td>@Common.FormatNumber(150000,0)</td>
+                               </tr>
+                            </tbody>
+                        </table>
+
                     </section>
 
-                    <br />
 
-                    <section>
+                    <section class="payment-section order-4">
                         <div class="row">
                             <div class="col-12">
                                 <h5 class="order__header">Phương thức thanh toán</h5>
@@ -247,14 +292,14 @@
 
                 </div>
 
-                <div class="paymentType">
+                <div class="paymentType payment-type-section">
                     <div class="row">
                         <div class="col-12">
                             <h5 class="paymentType__header">Loại thanh toán</h5>
                         </div>
                     </div>
 
-                    <section class="list-payment-type">
+                    <div class="list-payment-type">
 
                         <div class="row g-1 list-payment-type-item">
 
@@ -284,71 +329,129 @@
 
                         </div>
 
-                    </section>
+                    </div>
 
                 </div>
 
             </div>
 
             <div class="col-md-4 col-sm-12">
-                <div class="content-box p-4 bg-white">
 
-                    <div class="row mb-2">
-                        <div class="col-6">
-                            @if (!string.IsNullOrEmpty(ViewBag.VNDtoUSD))
-                            {
-                                <p class="currencyExchangeTitle">Giá USD hôm nay:<span class="text-danger"> @ViewBag.VNDtoUSD </span> </p>
-                            }
-                        </div>
-                        <div class="col-6">
-
-                            <p id="showRates" class="SeeCurrencyExchange">Xem tỷ lệ quy đổi ngoại tệ</p>
-                        </div>
-                    </div>
-
-
-                    <div class="row mb-2">
+                <section style="margin-bottom:16px;" class="contact-section order-2">
+                    <div class="row">
                         <div class="col-12">
-                            <h5>Số tiền thanh toán</h5>
+                            <h5 class="order__header">Thông tin liên hệ</h5>
                         </div>
                     </div>
-
-
 
                     <div class="row mb-2">
-                        <div class="col-7">
-                            <p class="order__title">Tạm tính</p>
-                        </div>
                         <div class="col-5">
-                            <p class="float-end"><span class="SubTotal">100000</span> đ</p>
-                            <input type="text" hidden name="Money" class="SubTotalValue" value="100000" />
+                            <p class="order__title">Mã khách hàng</p>
+                        </div>
+                        <div class="col-7">
+                            <p class="float-end"><span class="OrderCode">KH00001</span></p>
                         </div>
                     </div>
-
 
                     <div class="row mb-2">
-                        <div class="col-7">
-                            <p data-id="requestType" class="order__title">Phí (0)</p>
-                        </div>
                         <div class="col-5">
-                            <p class="float-end"><span class="FeeDependOnSth">0</span> đ</p>
+                            <p class="order__title">Tên khách hàng</p>
+                        </div>
+                        <div class="col-7">
+                            <p class="float-end">Nguyễn Văn A</p>
                         </div>
                     </div>
 
-
-
-                    <hr />
                     <div class="row mb-2">
-                        <div class="col-7">
-                            <p class="total-price">TỔNG PHÍ THANH TOÁN</p>
-                        </div>
                         <div class="col-5">
-                            <p class="float-end"><span class="TotalPay">100000</span> đ</p>
-                            <input type="text" hidden class="TotalPayInput" name="TotalPay" value="100000" />
-
+                            <p class="order__title">Email</p>
+                        </div>
+                        <div class="col-7">
+                            <p class="float-end"><span>enviet@gmail.com</span></p>
                         </div>
                     </div>
+                    <div class="row mb-2">
+                        <div class="col-5">
+                            <p class="order__title">Số điện thoại</p>
+                        </div>
+                        <div class="col-7">
+                            <p class="float-end"><span>0123456789</span></p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-4">
+                            <p class="order__title">Địa chỉ</p>
+                        </div>
+                        <div class="col-8">
+                            <p class="float-end"><span>16B Sông Đà, Phường 02, Quận Tân Bình, Thành phố Hồ Chí Minh</span></p>
+                        </div>
+                    </div>
+                </section>
+
+
+                <div class="payment-info-section order-3">
+                    <div class="content-box p-4 bg-white" style="border: solid 1px #dbdbdb">
+
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                @if (!string.IsNullOrEmpty(ViewBag.VNDtoUSD))
+                                {
+                                    <p class="currencyExchangeTitle">1 USD = <span class="text-danger"> @Common.FormatNumber(int.Parse(ViewBag.VNDtoUSD), 0)</span> VNĐ </p>
+                                }
+                            </div>
+                            <div class="col-6">
+
+                                <p id="showRates" class="SeeCurrencyExchange">Xem tỷ lệ quy đổi ngoại tệ</p>
+                            </div>
+                        </div>
+
+
+                        <div class="row mb-2">
+                            <div class="col-12">
+                                <h5>Số tiền thanh toán</h5>
+                            </div>
+                        </div>
+
+
+
+                        <div class="row mb-2">
+                            <div class="col-4">
+                                <p class="order__title">Tạm tính</p>
+                            </div>
+                            <div class="col-8">
+                                <p class="float-end"><span class="SubTotal">100000</span> đ</p>
+                                <input type="text" hidden name="Money" class="SubTotalValue" value="100000" />
+                            </div>
+                        </div>
+
+
+                        <div class="row mb-2">
+                            <div class="col-4">
+                                <p data-id="requestType" class="order__title">Phí (0)</p>
+                            </div>
+                            <div class="col-8">
+                                <p class="float-end"><span class="FeeDependOnSth">0</span> đ</p>
+                            </div>
+                        </div>
+
+
+
+                        <hr />
+                        <div class="row mb-2">
+                            <div class="col-4">
+                                <p class="total-price">TỔNG TIỀN</p>
+                            </div>
+                            <div class="col-8">
+                                <p class="float-end"><span class="TotalPay">100000</span> đ</p>
+                                <input type="text" hidden class="TotalPayInput" name="TotalPay" value="100000" />
+
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
+
                 <button type="submit" class="btn btn__xac-nhan p-2 mt-4" id="btn-submit" style="width: 100%">Xác nhận</button>
             </div>
 
@@ -358,9 +461,6 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <h6 class="modal-title" id="ratesModalLabel">Được cung cấp bởi Vietcombank</h6> <br />
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
                         </div>
                         <div class="modal-body">
                             <!-- Định nghĩa div chứa nội dung của PartialView -->
