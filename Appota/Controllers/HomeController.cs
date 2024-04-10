@@ -421,6 +421,20 @@ namespace Appota.Controllers
 
             else if (paymentType == "VNPAY")
             {
+                var PaymentActive = db.Payments.Where(x => x.Name == paymentType && x.IsActived == false).FirstOrDefault();
+                if (PaymentActive != null)
+                {
+                    TempData["ErrorMessage"] = "Phương thức thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
+                    return RedirectToAction("GateWayEnViet", "Home");
+                }
+                var requestTypeActive = db.PaymentsFee.Where(x => x.RequestType == requestType && x.IsActived == false).FirstOrDefault();
+                if (requestTypeActive != null)
+                {
+
+                    TempData["ErrorMessage"] = "Loại thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
+                    return RedirectToAction("GateWayEnViet", "Home");
+                }
+
                 var orderId = RandomString(10);
                 user.Name = userName;
                 user.PaymentType = paymentType;
