@@ -6,31 +6,33 @@
     <div class="row">
         <div class="col-12">
             <h3 class="text-center">Quy đổi tiền tệ</h3>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>
-                            Tên loại ngoại tệ
-                        </th>
-                        <th>
-                            Mã ngoại tệ
-                        </th>
-                        <th>
-                            Tiền quy đổi (VNĐ)
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var rates in Model)
-                    {
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
                         <tr>
-                            <td>@rates.CurrencyName</td>
-                            <td>@rates.CurrencyCode</td>
-                            <td>@rates.Transfer</td>
+                            <th class="text-center">
+                                Tên loại ngoại tệ
+                            </th>
+                            <th class="text-center">
+                                Mã ngoại tệ
+                            </th>
+                            <th class="text-center">
+                                Tiền quy đổi (VNĐ)
+                            </th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var rates in Model)
+                        {
+                            <tr>
+                                <td>@rates.CurrencyName</td>
+                                <td>@rates.CurrencyCode</td>
+                                <td>@rates.Transfer</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
