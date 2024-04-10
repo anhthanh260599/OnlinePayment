@@ -3,17 +3,17 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Appota.Models.PaymentLibrary
+namespace Appota.Models.PaymentLibrary.VNPAY
 {
     public class VnPayLibrary
     {
         public const string VERSION = "2.1.0";
-        private SortedList<String, String> _requestData = new SortedList<String, String>(new VnPayCompare());
-        private SortedList<String, String> _responseData = new SortedList<String, String>(new VnPayCompare());
+        private SortedList<string, string> _requestData = new SortedList<string, string>(new VnPayCompare());
+        private SortedList<string, string> _responseData = new SortedList<string, string>(new VnPayCompare());
 
         public void AddRequestData(string key, string value)
         {
-            if (!String.IsNullOrEmpty(value))
+            if (!string.IsNullOrEmpty(value))
             {
                 _requestData.Add(key, value);
             }
@@ -21,7 +21,7 @@ namespace Appota.Models.PaymentLibrary
 
         public void AddResponseData(string key, string value)
         {
-            if (!String.IsNullOrEmpty(value))
+            if (!string.IsNullOrEmpty(value))
             {
                 _responseData.Add(key, value);
             }
@@ -47,7 +47,7 @@ namespace Appota.Models.PaymentLibrary
             StringBuilder data = new StringBuilder();
             foreach (KeyValuePair<string, string> kv in _requestData)
             {
-                if (!String.IsNullOrEmpty(kv.Value))
+                if (!string.IsNullOrEmpty(kv.Value))
                 {
                     data.Append(WebUtility.UrlEncode(kv.Key) + "=" + WebUtility.UrlEncode(kv.Value) + "&");
                 }
@@ -55,7 +55,7 @@ namespace Appota.Models.PaymentLibrary
             string queryString = data.ToString();
 
             baseUrl += "?" + queryString;
-            String signData = queryString;
+            string signData = queryString;
             if (signData.Length > 0)
             {
 
@@ -93,7 +93,7 @@ namespace Appota.Models.PaymentLibrary
             }
             foreach (KeyValuePair<string, string> kv in _responseData)
             {
-                if (!String.IsNullOrEmpty(kv.Value))
+                if (!string.IsNullOrEmpty(kv.Value))
                 {
                     data.Append(WebUtility.UrlEncode(kv.Key) + "=" + WebUtility.UrlEncode(kv.Value) + "&");
                 }
@@ -113,7 +113,7 @@ namespace Appota.Models.PaymentLibrary
     {
 
 
-        public static String HmacSHA512(string key, String inputData)
+        public static string HmacSHA512(string key, string inputData)
         {
             var hash = new StringBuilder();
             byte[] keyBytes = Encoding.UTF8.GetBytes(key);

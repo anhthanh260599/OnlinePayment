@@ -46,6 +46,15 @@
           }
         }
       },
+      "BouncyCastle/1.8.9": {
+        "type": "package",
+        "compile": {
+          "lib/BouncyCastle.Crypto.dll": {}
+        },
+        "runtime": {
+          "lib/BouncyCastle.Crypto.dll": {}
+        }
+      },
       "Humanizer/2.14.1": {
         "type": "package",
         "dependencies": {
@@ -4088,6 +4097,19 @@
         "lib/netstandard2.0/Azure.Identity.dll",
         "lib/netstandard2.0/Azure.Identity.xml",
         "pkgicon.png"
+      ]
+    },
+    "BouncyCastle/1.8.9": {
+      "sha512": "axnBgvdD5n+FnEG6efk/tfKuMFru7R/EoISH9zjh319yb3HD24TEHSAbNN/lTRT2ulOGRxDgOsCjkuk08iwWPg==",
+      "type": "package",
+      "path": "bouncycastle/1.8.9",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "bouncycastle.1.8.9.nupkg.sha512",
+        "bouncycastle.nuspec",
+        "lib/BouncyCastle.Crypto.dll"
       ]
     },
     "Humanizer/2.14.1": {
@@ -11749,6 +11771,7 @@
   },
   "projectFileDependencyGroups": {
     "net7.0": [
+      "BouncyCastle >= 1.8.9",
       "Microsoft.EntityFrameworkCore >= 7.0.0-preview.7.20365.15",
       "Microsoft.EntityFrameworkCore.SqlServer >= 7.0.0-preview.7.20365.15",
       "Microsoft.EntityFrameworkCore.Tools >= 7.0.0-preview.7.20365.15",
@@ -11799,6 +11822,10 @@
       "net7.0": {
         "targetAlias": "net7.0",
         "dependencies": {
+          "BouncyCastle": {
+            "target": "Package",
+            "version": "[1.8.9, )"
+          },
           "Microsoft.EntityFrameworkCore": {
             "target": "Package",
             "version": "[7.0.0-preview.7.20365.15, )"
@@ -11886,6 +11913,16 @@
       "warningLevel": 1,
       "message": "Appota depends on Microsoft.EntityFrameworkCore.Tools (>= 7.0.0-preview.7.20365.15) but Microsoft.EntityFrameworkCore.Tools 7.0.0-preview.7.20365.15 was not found. An approximate best match of Microsoft.EntityFrameworkCore.Tools 7.0.0-preview.7.22376.2 was resolved.",
       "libraryId": "Microsoft.EntityFrameworkCore.Tools",
+      "targetGraphs": [
+        "net7.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'BouncyCastle 1.8.9' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net7.0'. This package may not be fully compatible with your project.",
+      "libraryId": "BouncyCastle",
       "targetGraphs": [
         "net7.0"
       ]

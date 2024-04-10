@@ -24,8 +24,11 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Security.Cryptography.Xml;
 using Appota.Common;
-using Appota.Models.PaymentLibrary;
 using Microsoft.VisualStudio.Services.Organization.Client;
+using ZaloPay.Helper.Crypto;
+using ZaloPay.Helper;
+using Appota.Models.PaymentLibrary.VNPAY;
+using Appota.Models.PaymentLibrary.Paypal;
 
 namespace Appota.Controllers
 {
@@ -120,6 +123,18 @@ namespace Appota.Controllers
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
+
+        // cắt chuỗi
+        static string GetRequestType(string input)
+        {
+            string[] parts = input.Split('-');
+            if (parts.Length > 1) 
+            {
+                return parts[1]; 
+            }
+            return input; 
+        }
+
         public ActionResult GetListUser()
         {
             var items = db.UsersPays.OrderByDescending(x=>x.Id).ToList();
@@ -129,6 +144,23 @@ namespace Appota.Controllers
         [HttpPost]
         public async Task<IActionResult> SubmitThanhToan(string paymentType, long TotalPay, string userName, string? requestType)
         {
+
+            var PaymentActive = db.Payments.Where(x => x.Name == paymentType && x.IsActived == false).FirstOrDefault();
+            if (PaymentActive != null)
+            {
+                TempData["ErrorMessage"] = "Phương thức thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
+                return RedirectToAction("GateWayEnViet", "Home");
+            }
+            var requestTypeActive = db.PaymentsFee.Where(x => x.RequestType == requestType && x.IsActived == false).FirstOrDefault();
+            if (requestTypeActive != null)
+            {
+
+                TempData["ErrorMessage"] = "Loại thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
+                return RedirectToAction("GateWayEnViet", "Home");
+            }
+            requestType = GetRequestType(requestType); // cắt chuỗi
+
+
             if (userName == null)
             {
                 TempData["ErrorMessage"] = "Vui lòng nhập tên người dùng";
@@ -137,19 +169,6 @@ namespace Appota.Controllers
 
             if (paymentType == "Appota")
             {
-                var PaymentActive = db.Payments.Where(x => x.Name == paymentType && x.IsActived == false).FirstOrDefault();
-                if (PaymentActive != null)
-                {
-                    TempData["ErrorMessage"] = "Phương thức thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
-                    return RedirectToAction("GateWayEnViet", "Home");
-                }
-                var requestTypeActive = db.PaymentsFee.Where(x => x.RequestType == requestType && x.IsActived == false).FirstOrDefault();
-                if (requestTypeActive != null)
-                {
-
-                    TempData["ErrorMessage"] = "Loại thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
-                    return RedirectToAction("GateWayEnViet", "Home");
-                }
                 var paymentApiConfig = _configuration.GetSection("PaymentApi");
                 var SecretKey = paymentApiConfig["SecretKey"];
                 var bankCode = "";
@@ -181,8 +200,8 @@ namespace Appota.Controllers
                 var extraData = "";
                 var paymentMethod = "";
 
-                if (requestType == "APPOTABANK" || requestType == "MOMO" || 
-                    requestType == "SHOPEEPAY" || requestType == "ZALOPAY" || 
+                if (requestType == "APPOTABANK" || requestType == "MOMO" ||
+                    requestType == "SHOPEEPAY" || requestType == "ZALOPAY" ||
                     requestType == "APPOTA" || requestType == "VNPTWALLET" ||
                     requestType == "VIETTELPAY" ||
                     requestType == "ATM" || requestType == "CC")
@@ -267,7 +286,7 @@ namespace Appota.Controllers
                             else
                             {
                                 TempData["ErrorMessage"] = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
-                                return RedirectToAction("GateWayEnViet","Home");
+                                return RedirectToAction("GateWayEnViet", "Home");
                             }
 
                         }
@@ -281,20 +300,6 @@ namespace Appota.Controllers
             }
             else if (paymentType == "Momo")
             {
-                var PaymentActive = db.Payments.Where(x => x.Name == paymentType && x.IsActived == false).FirstOrDefault();
-                if (PaymentActive != null)
-                {
-                    TempData["ErrorMessage"] = "Phương thức thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
-                    return RedirectToAction("GateWayEnViet", "Home");
-                }
-                var requestTypeActive = db.PaymentsFee.Where(x => x.RequestType == requestType && x.IsActived == false).FirstOrDefault();
-                if (requestTypeActive != null)
-                {
-
-                    TempData["ErrorMessage"] = "Loại thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
-                    return RedirectToAction("GateWayEnViet", "Home");
-                }
-
 
                 var Momo = _configuration.GetSection("Momo");
                 var apiUrl = Momo["ApiUrl"];
@@ -379,24 +384,11 @@ namespace Appota.Controllers
                     }
                 }
             }
-            
+
             else if (paymentType == "Paypal")
             {
                 if (requestType != null)
                 {
-                    var PaymentActive = db.Payments.Where(x => x.Name == paymentType && x.IsActived == false).FirstOrDefault();
-                    if (PaymentActive != null)
-                    {
-                        TempData["ErrorMessage"] = "Phương thức thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
-                        return RedirectToAction("GateWayEnViet", "Home");
-                    }
-                    var requestTypeActive = db.PaymentsFee.Where(x=>x.RequestType == requestType && x.IsActived == false).FirstOrDefault();
-                    if (requestTypeActive != null)
-                    {
-
-                        TempData["ErrorMessage"] = "Loại thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
-                        return RedirectToAction("GateWayEnViet", "Home");
-                    }
                     var orderId = RandomString(10);
                     user.Name = userName;
                     user.PaymentType = paymentType;
@@ -408,7 +400,7 @@ namespace Appota.Controllers
                     db.SaveChanges();
                     double USD;
                     USD = (double)TotalPay / VNDtoUSD;
-                    USD = Math.Round(USD,2);
+                    USD = Math.Round(USD, 2);
 
                     TempData["orderId"] = orderId;
                     TempData["TotalPay"] = USD.ToString();
@@ -421,20 +413,6 @@ namespace Appota.Controllers
 
             else if (paymentType == "VNPAY")
             {
-                var PaymentActive = db.Payments.Where(x => x.Name == paymentType && x.IsActived == false).FirstOrDefault();
-                if (PaymentActive != null)
-                {
-                    TempData["ErrorMessage"] = "Phương thức thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
-                    return RedirectToAction("GateWayEnViet", "Home");
-                }
-                var requestTypeActive = db.PaymentsFee.Where(x => x.RequestType == requestType && x.IsActived == false).FirstOrDefault();
-                if (requestTypeActive != null)
-                {
-
-                    TempData["ErrorMessage"] = "Loại thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
-                    return RedirectToAction("GateWayEnViet", "Home");
-                }
-
                 var orderId = RandomString(10);
                 user.Name = userName;
                 user.PaymentType = paymentType;
@@ -445,6 +423,93 @@ namespace Appota.Controllers
                 db.UsersPays.Add(user);
                 db.SaveChanges();
                 return RedirectToAction("VnPay_Payment", "Home", new { requestType = requestType, orderCode = orderId });
+            }
+
+            else if (paymentType == "ZaloPay")
+            {
+                
+
+                var ZaloPayConfig = _configuration.GetSection("ZaloPay");
+                string ApiUrl = ZaloPayConfig["Api_Url"];
+                string app_id = ZaloPayConfig["app_id"];
+                string key = ZaloPayConfig["key"];
+                string redirecturl = ZaloPayConfig["redirecturl"];
+                var embed_data = new { redirecturl = (string)null, bankgroup = (string)null };
+
+                var bankCode = "";
+                if (requestType == "ATM")
+                {
+                    embed_data = new
+                    {
+                        redirecturl = redirecturl,
+                        bankgroup = requestType
+                    };
+                }
+                else
+                {
+                    embed_data = new
+                    {
+                        redirecturl = redirecturl,
+                        bankgroup = (string)null
+                    };
+                }
+
+                if (requestType != "ATM" && requestType != "CC" && requestType != "zalopayapp")
+                {
+                    requestType = "";
+                }
+
+                var orderId = RandomString(10);
+                
+
+                var items = new[] { new { } };
+                var param = new Dictionary<string, string>();
+                var app_trans_id = orderId; // Generate a random order's ID.
+
+
+                param.Add("app_id", app_id);
+                param.Add("app_user", userName);
+                param.Add("app_time", ZaloPay.Helper.Utils.GetTimeStamp().ToString());
+                param.Add("amount", TotalPay.ToString());
+                param.Add("app_trans_id", DateTime.Now.ToString("yyMMdd") + "_" + app_trans_id); // mã giao dich có định dạng yyMMdd_xxxx
+                param.Add("embed_data", JsonConvert.SerializeObject(embed_data));
+                param.Add("item", JsonConvert.SerializeObject(items));
+                param.Add("description", "Én Việt - Thanh toán đơn hàng #" + app_trans_id);
+
+                if(requestType == "ATM")
+                {
+                    param.Add("bank_code", "");
+                }
+                else
+                {
+                    param.Add("bank_code", requestType);
+                }
+
+                var data = app_id + "|" + param["app_trans_id"] + "|" + param["app_user"] + "|" + param["amount"] + "|"
+                    + param["app_time"] + "|" + param["embed_data"] + "|" + param["item"];
+                param.Add("mac", HmacHelper.Compute(ZaloPayHMAC.HMACSHA256, key, data));
+
+                var result = await HttpHelper.PostFormAsync(ApiUrl, param);
+
+                foreach (var entry in result)
+                {
+                   if (entry.Key != null)
+                    {
+                        if(entry.Key == "order_url")
+                        {
+                            user.Name = userName;
+                            user.PaymentType = paymentType;
+                            user.Amount = TotalPay;
+                            user.CreatedDate = DateTime.Now;
+                            user.OrderId = orderId;
+                            user.PaymentStatus = "Giao dịch đang xử lý";
+                            db.UsersPays.Add(user);
+                            db.SaveChanges();
+                            TempData["orderId"] = app_trans_id;
+                            return Redirect(entry.Value.ToString());
+                        }
+                    }
+                }
             }
 
             else
@@ -606,7 +671,7 @@ namespace Appota.Controllers
 
             vnpay.AddRequestData("vnp_CreateDate", order.CreatedDate.ToString("yyyyMMddHHmmss"));
             vnpay.AddRequestData("vnp_CurrCode", "VND");
-            vnpay.AddRequestData("vnp_IpAddr", Utils.GetIpAddress(HttpContext));
+            vnpay.AddRequestData("vnp_IpAddr", Models.PaymentLibrary.VNPAY.Utils.GetIpAddress(HttpContext));
             vnpay.AddRequestData("vnp_Locale", "vn");
             vnpay.AddRequestData("vnp_OrderInfo", "Thanh toán đơn hàng :" + order.OrderId);
             vnpay.AddRequestData("vnp_OrderType", "other"); //default value: other
@@ -622,54 +687,7 @@ namespace Appota.Controllers
             return Redirect(urlPayment);
         }
 
-        public ActionResult VnPay_Return()
-        {
-            var queryString = HttpContext.Request.Query;
 
-            if (queryString.Count > 0)
-            {
-                var VnPayConfig = _configuration.GetSection("VNPAY");
-
-                string vnp_HashSecret = VnPayConfig["vnp_HashSecret"]; //Chuoi bi mat
-                var vnpayData = queryString;
-                VnPayLibrary vnpay = new VnPayLibrary();
-                foreach (var pair in vnpayData)
-                {
-                    var key = pair.Key;
-                    var value = pair.Value;
-                    //get all querystring data
-                    if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
-                    {
-                        vnpay.AddResponseData(key, value);
-                    }
-                }
-                string orderCode = Convert.ToString(vnpay.GetResponseData("vnp_TxnRef"));
-                long vnpayTranId = Convert.ToInt64(vnpay.GetResponseData("vnp_TransactionNo"));
-                string vnp_ResponseCode = vnpay.GetResponseData("vnp_ResponseCode");
-                string vnp_TransactionStatus = vnpay.GetResponseData("vnp_TransactionStatus");
-                String vnp_SecureHash = queryString["vnp_SecureHash"];
-                String TerminalID = queryString["vnp_TmnCode"];
-                long vnp_Amount = Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100;
-                String bankCode = queryString["vnp_BankCode"];
-
-                bool checkSignature = vnpay.ValidateSignature(vnp_SecureHash, vnp_HashSecret);
-                if (checkSignature)
-                {
-                    if (vnp_ResponseCode == "00" && vnp_TransactionStatus == "00") // Thanh toán thành công
-                    {
-                        //Thanh toan thanh cong
-                        
-                    }
-                    else
-                    {
-                        ViewBag.InnerText = "Có lỗi xảy ra trong quá trình xử lý.Mã lỗi: " + vnp_ResponseCode;
-                        ViewBag.ThanhToanThatBai = "Thanh toán thất bại, vui lòng kiểm tra lại giao dịch";
-                    }
-                    ViewBag.SoTienThanhToan = "Số tiền thanh toán (VND):" + Common.Common.FormatNumber(vnp_Amount); // vnp_Amount.ToString();
-                }
-            }
-            return View();
-        }
 
         public async Task<IActionResult> KetQuaThanhToan()
         {
@@ -713,7 +731,13 @@ namespace Appota.Controllers
             string vnp_ResponseCode = queryParameters["vnp_ResponseCode"];
             string vnp_TransactionStatus = queryParameters["vnp_TransactionStatus"];
             string vnp_TxnRef = queryParameters["vnp_TxnRef"];
-            //
+            //Zalo Pay
+            var ZaloPayConfig = _configuration.GetSection("ZaloPay");
+            var ZaloPay_AppId = ZaloPayConfig["app_id"];
+            string pmcid = queryParameters["pmcid"];
+            string appid = queryParameters["appid"];
+            string ZaloPayStatus = queryParameters["status"];
+          
 
             string resultCode = "";
             string errorCode = "";
@@ -772,6 +796,25 @@ namespace Appota.Controllers
                 orderId = vnp_TxnRef;
 
                 if (vnp_ResponseCode == "00" && vnp_TransactionStatus == "00")
+                {
+                    resultMessage = "Thanh toán thành công";
+                    newResultCode = 0;
+                }
+                else
+                {
+                    resultMessage = "Thanh toán thất bại";
+                    newResultCode = -1;
+                }
+                ViewBag.KetQuaThanhToan = resultMessage;
+                ViewBag.PartnerCode = partnerCode;
+            }
+
+            if (pmcid != null & appid != null && appid == ZaloPay_AppId)
+            {
+                partnerCode = "ZaloPay";
+                orderId = TempData["orderId"] as string;
+
+                if(ZaloPayStatus == "1")
                 {
                     resultMessage = "Thanh toán thành công";
                     newResultCode = 0;

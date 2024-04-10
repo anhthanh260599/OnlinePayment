@@ -1,12 +1,12 @@
 ﻿using PayPal.Api;
 
-namespace Appota.Models
+namespace Appota.Models.PaymentLibrary.Paypal
 {
     public class PaypalConfiguration
     {
         //Variables for storing the clientID and clientSecret key  
-        public  static string ClientId;
-        public  static string ClientSecret;
+        public static string ClientId;
+        public static string ClientSecret;
 
         //Constructor  
         static PaypalConfiguration()
@@ -17,7 +17,7 @@ namespace Appota.Models
         // getting properties from the web.config  
         public static Dictionary<string, string> GetConfig()
         {
-            return PayPal.Api.ConfigManager.Instance.GetProperties();
+            return ConfigManager.Instance.GetProperties();
         }
         private static string GetAccessToken()
         {
