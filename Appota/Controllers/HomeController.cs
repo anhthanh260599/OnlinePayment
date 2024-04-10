@@ -24,6 +24,8 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Security.Cryptography.Xml;
 using Appota.Common;
+using Appota.Models.PaymentLibrary;
+using Microsoft.VisualStudio.Services.Organization.Client;
 
 namespace Appota.Controllers
 {
@@ -108,36 +110,7 @@ namespace Appota.Controllers
         {
             return View();
         }
-
-        public async Task<IActionResult> ThanhToan()
-        {
-            var url = "https://justcors.com/l_d26ou2gp0k/https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx?b=10";
-            var httpClient = new HttpClient();
-            var xml = await httpClient.GetStringAsync(url);
-            var xdoc = XDocument.Parse(xml);
-
-            var errorMessage = TempData["ErrorMessage"];
-
-            var exrates = xdoc.Descendants("Exrate")
-                .Select(x => new Rates
-                {
-                    CurrencyCode = (string)x.Attribute("CurrencyCode"),
-                    CurrencyName = (string)x.Attribute("CurrencyName"),
-                    Buy = (string)x.Attribute("Buy"),
-                    Transfer = (string)x.Attribute("Transfer"),
-                    Sell = (string)x.Attribute("Sell")
-                })
-                .ToList();
-
-            var usdTransferRate = exrates.FirstOrDefault(rate => rate.CurrencyCode == "USD")?.Transfer;
-            if (!string.IsNullOrEmpty(usdTransferRate))
-            {
-                // Loại bỏ dấu phẩy và chuyển đổi thành kiểu int
-                VNDtoUSD = double.Parse(usdTransferRate.Replace(",", ""));
-                ViewBag.VNDtoUSD = VNDtoUSD;
-            }
-            return View(exrates);
-        }
+       
         private static Random random = new Random();
 
         public static string RandomString(int length)
@@ -145,266 +118,6 @@ namespace Appota.Controllers
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Repeat(chars, length)
                 .Select(s => s[random.Next(s.Length)]).ToArray());
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> XacNhanThanhToan(string paymentType, long TotalPay, string userName, string? requestType)
-        {
-            if(userName == null)
-            {
-                TempData["ErrorMessage"] = "Vui lòng nhập tên người dùng";
-                return RedirectToAction("ThanhToan", "Home");
-            }
-
-            if (paymentType == "Appota")
-            {
-                var paymentApiConfig = _configuration.GetSection("PaymentApi");
-                var SecretKey = paymentApiConfig["SecretKey"];
-                var bankCode = "";
-                var clientIp = "103.53.171.142";
-                var notifyUrl = paymentApiConfig["notifyUrl"];
-                var redirectUrl = paymentApiConfig["redirectUrl"];
-                var partnerCode = paymentApiConfig["PartnerCode"];
-                var ApiKey = paymentApiConfig["ApiKey"];
-                TempData["ApiKey"] = ApiKey;
-                TempData["SecretKey"] = SecretKey;
-                TempData["partnerCode"] = partnerCode;
-                var token = GenerateJwtToken(partnerCode, ApiKey, SecretKey);
-                TempData["AppotaToken"] = token;
-                var amount = TotalPay;
-                user.Amount = amount;
-
-                TempData["Amount"] = amount.ToString();
-
-                var orderId = RandomString(10);
-
-                user.Name = userName;
-                var orderInfo = userName;
-                user.OrderId = orderId;
-                user.CreatedDate = DateTime.Now;
-                user.PaymentType = paymentType;
-                TempData["orderId"] = orderId;
-                TempData["orderInfo"] = orderInfo;
-                TempData["paymentType"] = paymentType;
-                var extraData = "";
-                var paymentMethod = "";
-
-                if (requestType == "APPOTABANK")
-                {
-                    var apiUrl = paymentApiConfig["ApiUrl"];
-                    var signatureData = $"amount={amount}&bankCode={bankCode}&clientIp={clientIp}&extraData={extraData}&notifyUrl={notifyUrl}&orderId={orderId}&orderInfo={orderInfo}&paymentMethod={paymentMethod}&redirectUrl={redirectUrl}";
-                    var signature = GenerateSignature(signatureData, SecretKey);
-                    var data = new
-                    {
-                        amount = amount,
-                        orderId = orderId,
-                        orderInfo = orderInfo,
-                        bankCode = bankCode,
-                        paymentMethod = paymentMethod,
-                        clientIp = clientIp,
-                        extraData = extraData,
-                        notifyUrl = notifyUrl,
-                        redirectUrl = redirectUrl,
-                        signature = signature,
-                    };
-                    user.PaymentStatus = "Giao dịch đang xử lý";
-                    db.UsersPays.Add(user);
-                    db.SaveChanges();
-                    using (var client = new HttpClient())
-                    {
-                        try
-                        {
-                            client.DefaultRequestHeaders.Add("X-APPOTAPAY-AUTH", token);
-                            var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-                            var response = await client.PostAsync(apiUrl, content);
-
-                            if (response.IsSuccessStatusCode)
-                            {
-                                var responseContent = await response.Content.ReadAsStringAsync();
-                                //var responseData = JsonConvert.DeserializeObject<ApiQRModel>(responseContent);
-                                //var errorCode = responseData.errorCode;
-                                //var paymentUrl = responseData.paymentUrl;
-                                JObject jmessage = JObject.Parse(responseContent);
-
-                                var signatureResponse = jmessage.GetValue("signature").ToString();
-
-                                TempData["AppotaSignature"] = signatureResponse;
-                                return Redirect(jmessage.GetValue("paymentUrl").ToString());
-                            }
-                            else
-                            {
-                                ViewBag.thongbao = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
-                                return View();
-                            }
-
-                        }
-                        catch (Exception ex)
-                        {
-                            ViewBag.thongbao = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
-                            return View();
-                        }
-                    }
-
-                }
-                else
-                {
-                    var apiUrl = paymentApiConfig["QRApi"];
-                    var signatureData = $"amount={amount}&clientIp={clientIp}&extraData={extraData}&notifyUrl={notifyUrl}&orderId={orderId}&orderInfo={orderInfo}&redirectUrl={redirectUrl}";
-                    var signature = GenerateSignature(signatureData, SecretKey);
-                    var data = new
-                    {
-                        orderId = orderId,
-                        orderInfo = orderInfo,
-                        amount = amount,
-                        notifyUrl = notifyUrl,
-                        redirectUrl = redirectUrl,
-                        extraData = extraData,
-                        clientIp = clientIp,
-                        signature = signature,
-                    };
-                    user.PaymentStatus = "Giao dịch đang xử lý";
-                    db.UsersPays.Add(user);
-                    db.SaveChanges();
-                    using (var client = new HttpClient())
-                    {
-                        try
-                        {
-                            client.DefaultRequestHeaders.Add("X-APPOTAPAY-AUTH", token);
-                            var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-                            var response = await client.PostAsync(apiUrl, content);
-
-                            if (response.IsSuccessStatusCode)
-                            {
-                                var responseContent = await response.Content.ReadAsStringAsync();
-                                //var responseData = JsonConvert.DeserializeObject<ApiQRModel>(responseContent);
-                                //var errorCode = responseData.errorCode;
-                                //var paymentUrl = responseData.paymentUrl;
-                                JObject jmessage = JObject.Parse(responseContent);
-
-                                var signatureResponse = jmessage.GetValue("signature").ToString();
-
-                                TempData["AppotaSignature"] = signatureResponse;
-                                var qrCode = jmessage.GetValue("qrData")["qrCodeUrl"].ToString();
-                                var qrTime = jmessage.GetValue("qrData")["qrCodeExpiryIn"].ToString();
-
-                                TempData["QRTime"] = qrTime;
-                                TempData["QRCode"] = qrCode;
-
-                                return RedirectToAction("AppotaQRPay", "Home");
-
-
-                                //return Redirect(qrData.ToString());
-
-                            }
-                            else
-                            {
-                                ViewBag.thongbao = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
-                                return View();
-                            }
-
-                        }
-                        catch (Exception ex)
-                        {
-                            ViewBag.thongbao = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
-                            return View();
-                        }
-                    }
-                }
-             
-            }
-            else if (paymentType == "Momo")
-            {
-                var Momo = _configuration.GetSection("Momo");
-                var apiUrl = Momo["ApiUrl"];
-                var PartnerCode = Momo["PartnerCode"];
-                var ApiKey = Momo["ApiKey"];
-                var SecretKey = Momo["SecretKey"];
-                string lang = "vi";
-                var extraData = "";
-                var orderInfo = "Thanh toán hoá đơn MOMO";
-                var redirectUrl = Momo["redirectUrl"];
-                string requestId = DateTime.Now.Ticks.ToString();
-
-                string amount = TotalPay.ToString();
-
-                var orderId = RandomString(10);
-
-                string ipnUrl = "https://localhost:44370/";
-                //requestType = "payWithATM";
-
-                user.Amount = TotalPay;
-                user.Name = userName;
-                user.CreatedDate = DateTime.Now;
-                user.PaymentType = paymentType;
-                user.OrderId = orderId;
-
-                TempData["orderId"] = orderId;
-                TempData["orderInfo"] = orderInfo;
-                TempData["paymentType"] = paymentType;
-                TempData["partnerCode"] = PartnerCode;
-                TempData["requestId"] = requestId;
-                TempData["ApiKey"] = ApiKey;
-                TempData["SecretKey"] = SecretKey;
-
-                var signatureData = $"accessKey={ApiKey}&amount={amount}&extraData={extraData}&ipnUrl={ipnUrl}&orderId={orderId}&orderInfo={orderInfo}&partnerCode={PartnerCode}&redirectUrl={redirectUrl}&requestId={requestId}&requestType={requestType}";
-                var signature = GenerateSignature(signatureData, SecretKey);
-
-                var data = new
-                {
-                    partnerCode = PartnerCode,
-                    partnerName = userName,
-                    storeId = "MoMoTestStore",
-                    requestType = requestType,
-                    ipnUrl = ipnUrl,
-                    redirectUrl = redirectUrl,
-                    orderId = orderId,
-                    amount = amount,
-                    lang = lang,
-                    orderInfo = orderInfo,
-                    requestId = requestId,
-                    extraData = extraData,
-                    signature = signature
-                };
-                user.PaymentStatus = "Giao dịch đang xử lý";
-                db.UsersPays.Add(user);
-                db.SaveChanges();
-
-                using (var client = new HttpClient())
-                {
-                    try
-                    {
-                        var content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-                        var response = await client.PostAsync(apiUrl, content);
-
-                        if (response.IsSuccessStatusCode)
-                        {
-                            var responseContent = await response.Content.ReadAsStringAsync();
-
-                            JObject jmessage = JObject.Parse(responseContent);
-                            return Redirect(jmessage.GetValue("payUrl").ToString());
-                        }
-                        else
-                        {
-                            ViewBag.thongbao = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
-                            return View();
-                        }
-
-                    }
-                    catch (Exception ex)
-                    {
-                        ViewBag.thongbao = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ với hỗ trợ.";
-                        return View();
-                    }
-                    return View();
-                }
-                return View();
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Vui lòng chọn phương thức thanh toán";
-                return RedirectToAction("ThanhToan", "Home");
-            }
-
         }
 
         public ActionResult GetListUser()
@@ -706,6 +419,20 @@ namespace Appota.Controllers
                 return RedirectToAction("GateWayEnViet", "Home");
             }
 
+            else if (paymentType == "VNPAY")
+            {
+                var orderId = RandomString(10);
+                user.Name = userName;
+                user.PaymentType = paymentType;
+                user.Amount = TotalPay;
+                user.CreatedDate = DateTime.Now;
+                user.OrderId = orderId;
+                user.PaymentStatus = "Giao dịch đang xử lý";
+                db.UsersPays.Add(user);
+                db.SaveChanges();
+                return RedirectToAction("VnPay_Payment", "Home", new { requestType = requestType, orderCode = orderId });
+            }
+
             else
             {
                 TempData["ErrorMessage"] = "Vui lòng chọn phương thức thanh toán";
@@ -757,7 +484,6 @@ namespace Appota.Controllers
 
 
         //// Thanh toán Paypal
-        
         public ActionResult PaymentWithPaypal(string Cancel = null)
         {
             var TotalPay = TempData["TotalPay"] as string;
@@ -825,6 +551,112 @@ namespace Appota.Controllers
             return View("KetQuaThanhToan");
         }
 
+        /// <summary>
+        /// Thanh toán VNPAY
+        /// </summary>
+        public ActionResult VnPay_Payment(string requestType, string orderCode)
+        {
+            string urlPayment = "";
+            var order = db.UsersPays.FirstOrDefault(x => x.OrderId == orderCode);
+
+            var VnPayConfig = _configuration.GetSection("VNPAY");
+            //Get Config Info
+            string vnp_Returnurl = VnPayConfig["vnp_Returnurl"]; //URL nhan ket qua tra ve 
+            string vnp_Url = VnPayConfig["vnp_Url"]; //URL thanh toan cua VNPAY 
+            string vnp_TmnCode = VnPayConfig["vnp_TmnCode"]; //Ma định danh merchant kết nối (Terminal Id)
+            string vnp_HashSecret = VnPayConfig["vnp_HashSecret"]; //Secret Key
+
+            //Build URL for VNPAY
+            VnPayLibrary vnpay = new VnPayLibrary();
+            vnpay.AddRequestData("vnp_Version", VnPayLibrary.VERSION);
+            vnpay.AddRequestData("vnp_Command", "pay");
+            vnpay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
+            var Price = order.Amount * 100;
+            vnpay.AddRequestData("vnp_Amount", Price.ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 10000000
+            if (requestType == "VNPAYQR")
+            {
+                vnpay.AddRequestData("vnp_BankCode", "VNPAYQR");
+            }
+            else if (requestType == "VNBANK")
+            {
+                vnpay.AddRequestData("vnp_BankCode", "VNBANK");
+            }
+            else if (requestType == "INTCARD")
+            {
+                vnpay.AddRequestData("vnp_BankCode", "INTCARD");
+            }
+            else 
+            {
+                vnpay.AddRequestData("vnp_BankCode", "");
+            }
+
+            vnpay.AddRequestData("vnp_CreateDate", order.CreatedDate.ToString("yyyyMMddHHmmss"));
+            vnpay.AddRequestData("vnp_CurrCode", "VND");
+            vnpay.AddRequestData("vnp_IpAddr", Utils.GetIpAddress(HttpContext));
+            vnpay.AddRequestData("vnp_Locale", "vn");
+            vnpay.AddRequestData("vnp_OrderInfo", "Thanh toán đơn hàng :" + order.OrderId);
+            vnpay.AddRequestData("vnp_OrderType", "other"); //default value: other
+
+            vnpay.AddRequestData("vnp_ReturnUrl", vnp_Returnurl);
+            vnpay.AddRequestData("vnp_TxnRef", order.OrderId); // Mã tham chiếu của giao dịch tại hệ thống của merchant. Mã này là duy nhất dùng để phân biệt các đơn hàng gửi sang VNPAY. Không được trùng lặp trong ngày
+
+            //Add Params of 2.1.0 Version
+            //Billing
+
+            urlPayment = vnpay.CreateRequestUrl(vnp_Url, vnp_HashSecret);
+            //log.InfoFormat("VNPAY URL: {0}", paymentUrl);
+            return Redirect(urlPayment);
+        }
+
+        public ActionResult VnPay_Return()
+        {
+            var queryString = HttpContext.Request.Query;
+
+            if (queryString.Count > 0)
+            {
+                var VnPayConfig = _configuration.GetSection("VNPAY");
+
+                string vnp_HashSecret = VnPayConfig["vnp_HashSecret"]; //Chuoi bi mat
+                var vnpayData = queryString;
+                VnPayLibrary vnpay = new VnPayLibrary();
+                foreach (var pair in vnpayData)
+                {
+                    var key = pair.Key;
+                    var value = pair.Value;
+                    //get all querystring data
+                    if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
+                    {
+                        vnpay.AddResponseData(key, value);
+                    }
+                }
+                string orderCode = Convert.ToString(vnpay.GetResponseData("vnp_TxnRef"));
+                long vnpayTranId = Convert.ToInt64(vnpay.GetResponseData("vnp_TransactionNo"));
+                string vnp_ResponseCode = vnpay.GetResponseData("vnp_ResponseCode");
+                string vnp_TransactionStatus = vnpay.GetResponseData("vnp_TransactionStatus");
+                String vnp_SecureHash = queryString["vnp_SecureHash"];
+                String TerminalID = queryString["vnp_TmnCode"];
+                long vnp_Amount = Convert.ToInt64(vnpay.GetResponseData("vnp_Amount")) / 100;
+                String bankCode = queryString["vnp_BankCode"];
+
+                bool checkSignature = vnpay.ValidateSignature(vnp_SecureHash, vnp_HashSecret);
+                if (checkSignature)
+                {
+                    if (vnp_ResponseCode == "00" && vnp_TransactionStatus == "00") // Thanh toán thành công
+                    {
+                        //Thanh toan thanh cong
+                        
+                    }
+                    else
+                    {
+                        ViewBag.InnerText = "Có lỗi xảy ra trong quá trình xử lý.Mã lỗi: " + vnp_ResponseCode;
+                        ViewBag.ThanhToanThatBai = "Thanh toán thất bại, vui lòng kiểm tra lại giao dịch";
+                    }
+                    ViewBag.SoTienThanhToan = "Số tiền thanh toán (VND):" + Common.Common.FormatNumber(vnp_Amount); // vnp_Amount.ToString();
+                }
+            }
+            return View();
+        }
+
         public async Task<IActionResult> KetQuaThanhToan()
         {
             string url = Request.GetDisplayUrl();
@@ -843,6 +675,7 @@ namespace Appota.Controllers
                 amout = int.Parse(amountString);
 
             }
+            // APPOTA & MOMO
             string currency = queryParameters["currency"];
             string orderId = queryParameters["orderId"];
             string appotapayTransId = queryParameters["appotapayTransId"];
@@ -852,14 +685,28 @@ namespace Appota.Controllers
             string paymentMethod = queryParameters["paymentMethod"];
             string paymentType = queryParameters["paymentType"];
             string transactionTs = queryParameters["transactionTs"];
+            //PAYPAL
             string guid = queryParameters["guid"];
             string paymentId = queryParameters["paymentId"];
             string token = queryParameters["token"];
             string PayerID = queryParameters["PayerID"];
+            //VNPAY
+            string vnp_Amount = queryParameters["vnp_Amount"];
+            string vnp_BankCode = queryParameters["vnp_BankCode"];
+            string vnp_BankTranNo = queryParameters["vnp_BankTranNo"];
+            string vnp_CardType = queryParameters["vnp_CardType"];
+            string vnp_OrderInfo = queryParameters["vnp_OrderInfo"];
+            string vnp_ResponseCode = queryParameters["vnp_ResponseCode"];
+            string vnp_TransactionStatus = queryParameters["vnp_TransactionStatus"];
+            string vnp_TxnRef = queryParameters["vnp_TxnRef"];
+            //
+
             string resultCode = "";
             string errorCode = "";
             int newResultCode = -1;
             string resultMessage = "";
+
+
 
             if (partnerCode == "MOMO")
             {
@@ -901,6 +748,25 @@ namespace Appota.Controllers
                 partnerCode = "PAYPAL";
                 newResultCode = 0;
                 resultMessage = "Thanh toán thành công";
+                ViewBag.KetQuaThanhToan = resultMessage;
+                ViewBag.PartnerCode = partnerCode;
+            }
+
+            if (vnp_ResponseCode != null && vnp_TransactionStatus != null)
+            {
+                partnerCode = "VNPAY";
+                orderId = vnp_TxnRef;
+
+                if (vnp_ResponseCode == "00" && vnp_TransactionStatus == "00")
+                {
+                    resultMessage = "Thanh toán thành công";
+                    newResultCode = 0;
+                }
+                else
+                {
+                    resultMessage = "Thanh toán thất bại";
+                    newResultCode = -1;
+                }
                 ViewBag.KetQuaThanhToan = resultMessage;
                 ViewBag.PartnerCode = partnerCode;
             }
