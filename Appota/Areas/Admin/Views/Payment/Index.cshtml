@@ -120,7 +120,7 @@
                                     </div>
 
                                     <div class="col-4">
-                                        <button type="submit" style="margin-left:-18px; margin-bottom: 2px;" class="btn btn-success">Lưu</button>
+                                        <button type="submit" style="margin-left:-18px; margin-bottom: 2px;" class="btn btn-success">Cập nhật ảnh</button>
                                     </div>
                                 </div>
                             }
@@ -141,10 +141,10 @@
                                     <tr>
                                         <th>Trạng thái</th>
                                         <th>Ảnh</th>
-                                        <th>Tên phí</th>
+                                        <th>Tên loại thanh toán</th>
                                         <th>Chi phí %</th>
                                         <th>Giá trị cố định</th>
-                                        <th>RequestType/Bankcode</th>
+                                        <th>Mã loại thanh toán</th>
                                         <th>Thay đổi ảnh</th>
                                         <th>Hành động</th>
                                     </tr>
@@ -165,10 +165,10 @@
                                             <td>
                                                 <img style="width:40px;height:40px;" src="@fee.Image" />
                                             </td>
-                                            <td> <input name="FeeName[]" value="@fee.Name" type="text" class="form-control" placeholder="Nhập tên phí" />   </td>
+                                            <td> <input name="FeeName[]" value="@fee.Name" type="text" class="form-control" placeholder="Nhập tên loại thanh toán" />   </td>
                                             <td> <input name="Percent[]" value="@fee.Percent" step="any" min="0" type="number" class="form-control" placeholder="Nhập tỷ lệ %" />  </td>
-                                            <td> <input name="FixedCosts[]" value="@fee.FixedCosts" step="any" type="number" min="0" class="form-control" placeholder="Nhập giá cố định" /></td>
-                                            <td> <input name="RequestType[]" value="@fee.RequestType" type="text" class="form-control" placeholder="Nhập RequestType/BankCode" /></td>
+                                            <td> <input name="FixedCosts[]" value="@fee.FixedCosts" step="any" type="number" min="0" class="form-control fixedCostInput" data-fixedcosts="@fee.Id" placeholder="Nhập giá cố định" /></td>
+                                            <td> <input name="RequestType[]" value="@fee.RequestType" type="text" class="form-control" placeholder="Nhập Mã loại thanh toán" /></td>
                                             <td class="custom-file">
                                                 <input type="file" class="form-control-file requestTypeImageInputFile form-control" id="requestTypeImage" value="@fee.Image">
                                                 <input type="text" hidden name="requestTypeImage[]" class="requestTypeImageInputValue" value="@fee.Image" />
@@ -187,7 +187,7 @@
                                     }
                                 </tbody>
                             </table>
-                            <input type="button" class="button-add-line btn btn-primary addFee" id="addFee" data-tableid="@item.Id" value="Thêm phí" />
+                            <input type="button" class="button-add-line btn btn-primary addFee" id="addFee" data-tableid="@item.Id" value="Thêm Loại thanh toán" />
                             <button type="submit" id="submitForm" class="btn btn-success">Lưu</button>
                         }
 
@@ -244,6 +244,18 @@
 }
 
 <script>
+    $('.feeRow').each(function () {
+        var row = $(this);
+        var fixedCostInput = row.find('.fixedCostInput');
+        var inputValue = fixedCostInput.val();
+        inputValue = parseFloat(inputValue);
+        // Lấy giá trị từ input
+        var formattedValue = inputValue.toFixed(0);
+
+        // Thiết lập giá trị đã làm tròn vào input FixedCosts trong hàng này
+        fixedCostInput.val(formattedValue);
+    });
+
 
     $(document).ready(function () {
         $('body').on('change', '.btnActive', function () {
@@ -412,6 +424,8 @@
             });
             return false;
         });
+
+
 
     });
 
