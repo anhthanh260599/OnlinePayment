@@ -142,9 +142,8 @@ namespace Appota.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SubmitThanhToan(string paymentType, long TotalPay, string userName, string? requestType)
+        public async Task<IActionResult> SubmitThanhToan(string paymentType, long TotalPay, string userName, string requestType)
         {
-
             var PaymentActive = db.Payments.Where(x => x.Name == paymentType && x.IsActived == false).FirstOrDefault();
             if (PaymentActive != null)
             {
@@ -156,6 +155,11 @@ namespace Appota.Controllers
             {
 
                 TempData["ErrorMessage"] = "Loại thanh toán này hiện tại tạm đóng, vui lòng quay lại sau";
+                return RedirectToAction("GateWayEnViet", "Home");
+            }
+            if (paymentType == null || requestType == null)
+            {
+                TempData["ErrorMessage"] = "Vui lòng chọn phương thức/loại thanh toán";
                 return RedirectToAction("GateWayEnViet", "Home");
             }
             requestType = GetRequestType(requestType); // cắt chuỗi
