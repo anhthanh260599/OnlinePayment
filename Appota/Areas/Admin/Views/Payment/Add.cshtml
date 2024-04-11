@@ -45,20 +45,20 @@
                 <table id="feeTable" class="table mt-4">
                     <thead>
                         <tr>
-                            <th class="required-field">Thông tin Phí </th>
+                            <th class="required-field">Loại thanh toán </th>
                             <th class="required-field">% Chi phí</th>
                             <th class="required-field">Giá cố định</th>
-                            <th class="required-field">Loại thanh toán</th>
+                            <th class="required-field">Mã loại thanh toán</th>
                             <th>Hình</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr class="feeRow">
-                            <td><input name="FeeName[]" type="text" class="form-control" placeholder="Nhập tên phí"></td>
+                            <td><input name="FeeName[]" type="text" class="form-control" placeholder="Nhập tên loại thanh toán"></td>
                             <td><input name="Percent[]" type="number" step="any" class="form-control" placeholder="Nhập chi phí %"></td>
                             <td><input name="FixedCosts[]" type="number" step="any" class="form-control" placeholder="Nhập giá cố định"></td>
-                            <td><input name="RequestType[]" type="text" class="form-control" placeholder="Nhập loại thanh toán (paywithATM/SHB/captureWallet)"></td>
+                            <td><input name="RequestType[]" type="text" class="form-control" placeholder="Nhập mã loại thanh toán (paywithATM/SHB/captureWallet)"></td>
                             <td class="custom-file">
                                 <input type="file" class="form-control-file requestTypeImageInputFile form-control" id="requestTypeImage">
                                 <input type="text" hidden name="requestTypeImage[]" class="requestTypeImageInputValue" />
@@ -67,7 +67,7 @@
                         </tr>
                     </tbody>
                 </table>
-                <button type="button" id="addFee" class="btn btn-primary">Thêm Phí</button>
+                <button type="button" id="addFee" class="btn btn-primary">Thêm Loại thanh toán</button>
             </div>
 
 

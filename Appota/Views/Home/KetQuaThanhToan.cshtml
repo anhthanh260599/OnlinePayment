@@ -1,59 +1,57 @@
 ﻿@model UsersPay;
 @using Appota.Common
 
-<h2 class="text-primary text-center">Kết quả thanh toán</h2>
+<script>
+    function displayPaymentResult(model) {
+        debugger;
+        if (model != null) {
+            if (model.resultCode == 0) {
+                var formattedAmount = model.amount.toLocaleString('en-US');
 
-<div class="container">
-    <div class="row">
-        <div class="col-12 text-center">
-            @if(!string.IsNullOrEmpty(ViewBag.PartnerCode))
-            {
-                if (ViewBag.PartnerCode == "APPOTAPAY")
-                {
-                    <img style="width: 20%" src="~/lib/Content/logo/payment-logo/appota-logo.png" />
-                }
-                if (ViewBag.PartnerCode == "MOMO")
-                {
-                    <img style="width: 20%" src="~/lib/Content/logo/payment-logo/momo-logo.png" />
-                }
-                if (ViewBag.PartnerCode == "PAYPAL")
-                {
-                    <img style="width: 20%" src="~/lib/Content/logo/payment-logo/paypal-logo.png" />
-                }
-                if (ViewBag.PartnerCode == "VNPAY")
-                {
-                    <img style="width: 20%" src="~/lib/Content/logo/payment-logo/vnpay-logo.png" />
-                }
-                if (ViewBag.PartnerCode == "ZaloPay")
-                {
-                    <img style="width: 20%" src="~/lib/Content/logo/payment-logo/zalo-pay.png" />
-                }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thanh toán thành công',
+                    html: `
+                            <p>Tên: <span class="fw-bold">${model.name}</span></p>
+                            <p>Mã đơn hàng: <span class="fw-bold">${model.orderId}</span></p>
+                                <p>Tổng tiền: <span class="fw-bold">${formattedAmount}</span></p>
+                        `
+                }).then((result) => {
+                    // Redirect to Home/Index
+                    if (result.isConfirmed) {
+                        window.location.href = '/Home/Index';
+                    }
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Thanh toán thất bại',
+                    text: model.paymentStatus
+                }).then((result) => {
+                    // Redirect to Home/Index
+                    if (result.isConfirmed) {
+                        window.location.href = '/Home/Index';
+                    }
+                });
             }
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-12 text-center">
-            @if (Model != null)
-            {
-                if (Model.ResultCode == 0)
-                {
-                    <h4 class="text-success">Thanh toán thành công</h4>
-                    <span>Tên: <span class="fw-bold">@Model.Name</span></span> <br />
-                    <span>Mã đơn hàng: <span class="fw-bold">@Model.OrderId</span></span> <br />
-                    <span>Tổng tiền: <span class="fw-bold">@Common.FormatNumber(Model.Amount,0)</span></span> <br />
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: 'Không có dữ liệu'
+            }).then((result) => {
+                // Redirect to Home/Index
+                if (result.isConfirmed) {
+                    window.location.href = '/Home/Index';
                 }
-                else
-                {
-                    <h4 class="text-danger">Thanh toán thất bại</h4>
-                    <span class="text-danger">@Model.PaymentStatus</span>
-                }
-            }
-            else
-            {
-                <p>Không có dữ liệu</p>
-            }
-        </div>
-    </div>
-</div>
+            });
+        }
+    }
+    var modelJson = @Json.Serialize(Model);
+
+    // Call the function to display payment result when page is loaded
+    displayPaymentResult(modelJson);
+</script>
+
 
 
