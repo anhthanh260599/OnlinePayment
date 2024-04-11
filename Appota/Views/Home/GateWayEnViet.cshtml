@@ -377,7 +377,7 @@
                                         {
                                             <div class="col-4" data-id="@item.Id">
                                                 <div class="radio-button">
-                                                    <input type="radio" id="@request.RequestType" data-id="requestType" value="@request.RequestType" data-value="@request.Percent" name="requestType" />
+                                                    <input type="radio" id="@request.RequestType" data-id="requestType" value="@request.RequestType" data-percent="@request.Percent" data-fixedcosts="@request.FixedCosts" name="requestType" />
                                                     <label style="width:100%" for="@request.RequestType">
                                                         <img src="@request.Image" alt="@request.RequestType" />
                                                         <span class="payment-name d-none d-md-inline">Thanh toán qua @request.Name</span>
@@ -435,10 +435,19 @@
 
                         <div class="row mb-2">
                             <div class="col-4">
-                                <p data-id="requestType" class="order__title">Phí (0)</p>
+                                <p data-id="requestTypePercent" class="order__title">Phí (0)</p>
                             </div>
                             <div class="col-8">
                                 <p class="float-end"><span class="FeeDependOnSth">0</span> đ</p>
+                            </div>
+                        </div>
+
+                        <div class="row mb-2">
+                            <div class="col-4">
+                                <p data-id="requestTypeFixedCosts" class="order__title">Phí cố định</p>
+                            </div>
+                            <div class="col-8">
+                                <p class="float-end"><span class="FixedCost">0</span> đ</p>
                             </div>
                         </div>
 
@@ -517,10 +526,13 @@
 
         $('input[name="requestType"]').on('click', function () {
             // Lấy giá trị %
-            var percent = $(this).data('value');
+            var percent = $(this).data('percent');
             percent = percent;
-            $('p[data-id="requestType"]').text('Phí (' + percent + ' %)');
+            $('p[data-id="requestTypePercent"]').text('Phí (' + percent + ' %)');
 
+            // Lấy giá cố định
+            var fixedcosts = $(this).data('fixedcosts');
+            fixedcosts = parseFloat(fixedcosts)
 
             // Tính tiền tạm tính
             var subtotal = $('.SubTotalValue').val();
@@ -529,9 +541,13 @@
             // Format và cập nhật số tiền phí
             $('.FeeDependOnSth').text(formatNumber(fee));
 
+            var formattedFixedCosts = fixedcosts.toFixed(0);
+            $('.FixedCost').text(formatNumber(formattedFixedCosts));
+
+            console.log(formattedFixedCosts);
 
             //Tính tổng tiền
-            var totalPay = parseFloat(subtotal) + fee;
+            var totalPay = parseFloat(subtotal) + fee + fixedcosts;
 
 
             // Format và cập nhật tổng số tiền
