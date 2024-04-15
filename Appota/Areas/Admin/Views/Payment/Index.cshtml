@@ -4,9 +4,10 @@
     ViewData["Title"] = "Index";
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
 }
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
 
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-
 <style>
 
     .accordion-item .accordion-button {
@@ -80,6 +81,131 @@
             border-radius: 50%;
         }
 
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+
+    @@media only screen and (min-width: 768px) {
+
+  /*       .paymentTypeNameButton {
+            width: 180px;
+            max-width: 200px; 
+        } */
+
+
+        label.switch.mb-2 {
+            margin-right: 18px;
+        }
+
+        .updatePaymentTypeImage, .AccordionPaymentType {
+            margin: auto 0;
+        }
+
+        .updatePaymentTypeImageButton {
+            margin-bottom: 8px;
+        }
+
+        .PaymentTypeImage {
+            width: 100px;
+            height: 100px;
+            margin: 8px;
+        }
+
+
+        .switch-paymentType-Button {
+            display: flex;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .UpdateImagePaymentTypeRow {
+            padding-left: 16px;
+        }
+
+        .AccordionPaymentType {
+        }
+    }
+
+    @@media only screen and (max-width: 767px) 
+    {
+
+        .switch {
+            margin-right: 3px;
+            margin-top: 3px;
+        }
+
+        .slider-paymentType.slider {
+            left: -3px;
+        }
+
+        .mobile-button {
+            width: 100px;
+            height: auto; 
+            font-size: 12px; 
+            margin-left: 80px;
+        }
+
+        .slider-paymentType.slider:before {
+            left: 4px;
+        }
+
+        .slider-paymentType.slider.round:before {
+            border-radius: 50%;
+        }
+
+        input:checked + .slider-paymentType.slider:before {
+            transform: translateX(10px);
+        }
+
+        .mobile-file {
+            width: 140px;
+            height: auto; /* Đảm bảo chiều cao tự động dựa trên nội dung */
+        }
+
+        .switch-paymentType-Button {
+            /* padding-left: 38px; */
+            display: flex;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+        }
+
+        table th {
+            min-width: 140px;
+        }
+
+        .paymentTypeNameButton {
+           
+        }
+
+        .updatePaymentTypeImage {
+            margin-top: 8px;
+        }
+
+        .updatePaymentTypeImageButton {
+        }
+
+        .PaymentTypeImageContainer {
+            display: flex;
+            justify-content:center;
+            align-items: center;
+        }
+
+        .PaymentTypeImage {
+            width: 50px;
+            height: 50px;
+            margin-left: 13px;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .col-2.col-md-1.switch-paymentType-Button.order-md-last {
+            margin-top: 5px;
+        }
+    }
+
 </style>
 
 <div>
@@ -95,22 +221,57 @@
         {
             <br />
 
-
-
-            <label class="switch mb-2">
-                <input type="checkbox" data-id="@item.Id" class="btnActive" @(item.IsActived ? "checked" : "") />
-                <span class="slider round"></span>
-            </label>
-
             <div class="accordion-item">
-
                 <h2 class="accordion-header" style="border-top: solid 1px #dbdbdb;" id="heading@(item.Id)">
+                    <div class="row justify-content-between">
+                        
 
-                    <div class="row">
-                        <div class="col-md-2 text-center">
-                            <img style="width:40%; margin: 8px;border-radius:8px; border:solid 1px #dbdbdb" src="@item.Image" />
+                        <div class="col-2 col-md-1 PaymentTypeImageContainer">
+                            <img class="PaymentTypeImage" src="@item.Image" />
+
                         </div>
-                        <div class="col-md-8">
+                                <div class="col-8 col-md-6 updatePaymentTypeImage ">
+                                    <div class="row UpdateImagePaymentTypeRow">
+                                        <div class="col-6 col-md-12">
+                                    @using (Html.BeginForm("ChangePaymentImage", "Payment", FormMethod.Post, new { enctype = "multipart/form-data", id = "paymentForm" }))
+                                    {
+                                        <div class="row">
+                                            <div class="col-6 col-md-9">
+                                                <input name="PaymentImage" type="file" class="form-control-file form-control mobile-file updatePaymentTypeImageInput" id="PaymentImage">
+                                                <input type="hidden" name="PaymentId" value="@item.Id" />
+                                            </div>
+                                            <div class="col-6 col-md-3">
+                                                <button type="submit" class="btn btn-success updatePaymentTypeImageButton mobile-button">Cập nhật ảnh</button>
+                                            </div>
+                                        </div>
+                                    }
+                                        </div>
+                                      @*   <div class="col-6 col-md-3">
+                                            <button type="submit" class="btn btn-success updatePaymentTypeImageButton">Cập nhật ảnh</button>
+                                        </div> *@
+                                    </div>
+                                </div>
+                        <div class="col-2 col-md-1 switch-paymentType-Button order-md-last">
+                            <label class="switch-paymentType switch mb-2">
+                                <input type="checkbox" data-id="@item.Id" class="btnActive" @(item.IsActived ? "checked" : "") />
+                                <span class="slider-paymentType slider round"></span>
+                            </label>
+                        </div>
+
+                        <div class="col-12 col-md-4 AccordionPaymentType d-block">
+                            <button class="accordion-button collapsed paymentTypeNameButton" type="button" style="padding-top:8px; padding-bottom: 8px; margin-bottom:6px;" data-bs-toggle="collapse" data-bs-target="#collapse@(item.Id)" aria-expanded="false" aria-controls="collapse@(item.Id)">
+                                @item.Name
+                            </button>
+                        </div>
+@* 
+                        <div class="col-2 col-md-1 switch-paymentType-Button order-first order-md-last">
+                            <label class="switch mb-2">
+                                <input type="checkbox" data-id="@item.Id" class="btnActive" @(item.IsActived ? "checked" : "") />
+                                <span class="slider round"></span>
+                            </label>
+                        </div> *@
+                 
+              @*           <div class="col-md-8">
                             @using (Html.BeginForm("ChangePaymentImage", "Payment", FormMethod.Post, new { enctype = "multipart/form-data", id = "paymentForm" }))
                             {
                                 <div class="row">
@@ -127,66 +288,67 @@
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse@(item.Id)" aria-expanded="false" aria-controls="collapse@(item.Id)">
                                 @item.Name
                             </button>
-                        </div>
+                        </div> *@
                     </div>
                 </h2>
 
                 <div id="collapse@(item.Id)" class="accordion-collapse collapse" aria-labelledby="heading@(item.Id)" data-bs-parent="#accordion">
-                    <div class="accordion-body">
-
+                    <div class="accordion-body ">
                         @using (Html.BeginForm("Edit", "Payment", FormMethod.Post, new { enctype = "multipart/form-data" }))
                         {
-                            <table id="feeTable@(item.Id)" class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Trạng thái</th>
-                                        <th>Ảnh</th>
-                                        <th>Tên loại thanh toán</th>
-                                        <th>Chi phí %</th>
-                                        <th>Giá trị cố định</th>
-                                        <th>Mã loại thanh toán</th>
-                                        <th>Thay đổi ảnh</th>
-                                        <th>Hành động</th>
-                                    </tr>
-                                </thead>
-
-
-                                <tbody>
-                                    @foreach (var fee in item.PaymentFees)
-                                    {
-                                        <tr class="feeRow">
-                                            <td class="text-center">
-                                                <label class="switch">
-                                                    <input type="checkbox" data-id="@fee.Id" class="btnFeeActive" @(fee.IsActived ? "checked" : "") />
-
-                                                    <span class="slider round"></span>
-                                                </label>
-                                            </td>
-                                            <td>
-                                                <img style="width:40px;height:40px;" src="@fee.Image" />
-                                            </td>
-                                            <td> <input name="FeeName[]" value="@fee.Name" type="text" class="form-control" placeholder="Nhập tên loại thanh toán" />   </td>
-                                            <td> <input name="Percent[]" value="@fee.Percent" step="any" min="0" type="number" class="form-control" placeholder="Nhập tỷ lệ %" />  </td>
-                                            <td> <input name="FixedCosts[]" value="@fee.FixedCosts" step="any" type="number" min="0" class="form-control fixedCostInput" data-fixedcosts="@fee.Id" placeholder="Nhập giá cố định" /></td>
-                                            <td> <input name="RequestType[]" value="@fee.RequestType" type="text" class="form-control" placeholder="Nhập Mã loại thanh toán" /></td>
-                                            <td class="custom-file">
-                                                <input type="file" class="form-control-file requestTypeImageInputFile form-control" id="requestTypeImage" value="@fee.Image">
-                                                <input type="text" hidden name="requestTypeImage[]" class="requestTypeImageInputValue" value="@fee.Image" />
-                                            </td>
-
-                                            <td>
-                                                @if (item.PaymentFees.IndexOf(fee) != 0)
-                                                {
-                                                    <a href="#" class="btnDeleteFee btn btn-sm btn-danger" data-id="@fee.Id"><i class="fa-regular fa-trash-can"></i></a>
-                                                }
-                                                <input type="text" name="PaymentID" value="@fee.PaymentId" hidden />
-                                                <input type="text" name="PaymentFeeId" value="@fee.Id" hidden />
-                                            </td>
+                            <div class="table-responsive-md">
+                                <table id="feeTable@(item.Id)" class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Trạng thái</th>
+                                            <th>Ảnh</th>
+                                            <th>Tên loại thanh toán</th>
+                                            <th>Chi phí %</th>
+                                            <th>Giá trị cố định</th>
+                                            <th>Mã loại thanh toán</th>
+                                            <th>Thay đổi ảnh</th>
+                                            <th>Hành động</th>
                                         </tr>
+                                    </thead>
 
-                                    }
-                                </tbody>
-                            </table>
+
+                                    <tbody>
+                                        @foreach (var fee in item.PaymentFees)
+                                        {
+                                            <tr class="feeRow">
+                                                <td class="text-center">
+                                                    <label class="switch">
+                                                        <input type="checkbox" data-id="@fee.Id" class="btnFeeActive" @(fee.IsActived ? "checked" : "") />
+
+                                                        <span class="slider round"></span>
+                                                    </label>
+                                                </td>
+                                                <td class="text-center">
+                                                    <img style="width:40px;height:40px;" src="@fee.Image" />
+                                                </td>
+                                                <td> <input name="FeeName[]" value="@fee.Name" type="text" class="form-control" placeholder="Nhập tên loại thanh toán" />   </td>
+                                                <td> <input name="Percent[]" value="@fee.Percent" step="any" min="0" type="number" class="form-control" placeholder="Nhập tỷ lệ %" />  </td>
+                                                <td> <input name="FixedCosts[]" value="@fee.FixedCosts" step="any" type="number" min="0" class="form-control fixedCostInput" data-fixedcosts="@fee.Id" placeholder="Nhập giá cố định" /></td>
+                                                <td> <input name="RequestType[]" value="@fee.RequestType" type="text" class="form-control" placeholder="Nhập Mã loại thanh toán" /></td>
+                                                <td class="custom-file">
+                                                    <input type="file" class="form-control-file requestTypeImageInputFile form-control" id="requestTypeImage" value="@fee.Image">
+                                                    <input type="text" hidden name="requestTypeImage[]" class="requestTypeImageInputValue" value="@fee.Image" />
+                                                </td>
+
+                                                <td>
+                                                    @if (item.PaymentFees.IndexOf(fee) != 0)
+                                                    {
+                                                        <a href="#" class="btnDeleteFee btn btn-sm btn-danger" data-id="@fee.Id"><i class="fa-regular fa-trash-can"></i></a>
+                                                    }
+                                                    <input type="text" name="PaymentID" value="@fee.PaymentId" hidden />
+                                                    <input type="text" name="PaymentFeeId" value="@fee.Id" hidden />
+                                                </td>
+                                            </tr>
+
+                                        }
+                                    </tbody>
+                                </table>
+                                </div>
                             <input type="button" class="button-add-line btn btn-primary addFee" id="addFee" data-tableid="@item.Id" value="Thêm Loại thanh toán" />
                             <button type="submit" id="submitForm" class="btn btn-success">Lưu</button>
                         }
