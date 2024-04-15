@@ -234,12 +234,14 @@
                         </div>
 
                         <table class="table table-responsive-sm">
+
+                            @* Lấy từ API qua *@
+
                             <thead>
                                 <tr>
                                     <th>Tên sản phẩm</th>
                                     <th class="text-center">Số lượng</th>
                                     <th class="text-center">Đơn giá (VNĐ)</th>
-                                    <th class="text-center">Thành tiền (VNĐ) </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -247,20 +249,28 @@
                                     <td>Yến Sào</td>
                                     <td class="text-center">1</td>
                                     <td class="text-center">@Common.FormatNumber(50000, 0)</td>
-                                    <td class="text-center">@Common.FormatNumber(50000, 0)</td>
                                 </tr>
                                 <tr>
                                     <td>Tour</td>
                                     <td class="text-center">2</td>
                                     <td class="text-center">@Common.FormatNumber(50000, 0)</td>
-                                    <td class="text-center">@Common.FormatNumber(100000, 0)</td>
                                 </tr>
 
                                 @*  Tổng tiền *@
 
                                 <tr>
-                                    <td colspan="3"> <strong>Tổng tiền</strong> </td>
+                                    <td colspan="2"> <strong>Thành tiền</strong> </td>
                                     <td class="text-center">@Common.FormatNumber(150000, 0)</td>
+                                </tr>
+
+                                <tr>
+                                    <td colspan="2"> <strong>Chiết khấu</strong> </td>
+                                    <td class="text-center">@Common.FormatNumber(10000, 0)</td>
+                                </tr>
+
+                                <tr>
+                                    <td colspan="2"> <strong>Tổng tiền</strong> </td>
+                                    <td class="text-center">@Common.FormatNumber(160000, 0)</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -427,7 +437,8 @@
                                 <p class="order__title">Tạm tính</p>
                             </div>
                             <div class="col-8">
-                                <p class="float-end"><span class="SubTotal">150000</span> đ</p>
+                                @* Lấy từ API qua *@
+                                <p class="float-end"><span class="SubTotal">160000</span> đ</p> 
                                 <input type="text" hidden name="Money" class="SubTotalValue" value="150000" />
                             </div>
                         </div>
